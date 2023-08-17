@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PSQL_URL")
+}
+
+model Client {
+  id         String        @id @unique @default(cuid())
+  oneId      String        @unique
+  createdAt  DateTime      @default(now())
+  fullname   String
+  phone      String        @unique
+  bonus      String?
+  moneySpent String?
+  rides      Ride[]
+  status     StatusClient?
+  ban        Json?
+  lastLogin  DateTime      @default(now())
+}
+
+model Driver {
+  id           String        @id @unique @default(cuid())
+  oneId        String        @unique
+  fullname     String
+  phone        String[]
+  license      String
+  registration String
+  rides        Ride[]
+  status       StatusDriver?
+  ban          Json? // {banned: boolean, reason: "", by: ADMIN}
+}
+
+model Ride {
+  id        String     @id @unique @default(cuid())
+  oneId     String     @unique
+  Client    Client     @relation(fields: [clientId], references: [id])
+  Driver    Driver     @relation(fields: [driverId], references: [id])
+  from      Json
+  to        Json
+  price     String
+  startedAt DateTime   @default(now())
+  arrivedAt DateTime
+  status    StatusRide
+  clientId  String
+  driverId  String
+}
+
+enum StatusDriver {
+  FREE
+  GOINGTOCLIENT
+  WAITING
+  ONTHEWAY
+}
+
+enum StatusClient {
+  REQUESTING
+  ONTHEWAY
+  OFFLINE
+  ONLINE
+}
+
+enum StatusRide {
+  ACTIVE
+  FINISHED
+}
