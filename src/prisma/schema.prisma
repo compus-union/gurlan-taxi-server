@@ -16,6 +16,7 @@ model Client {
   createdAt  DateTime      @default(now())
   fullname   String
   phone      String        @unique
+  password   String
   bonus      String?
   moneySpent String?
   rides      Ride[]

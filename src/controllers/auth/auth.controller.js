@@ -12,9 +12,9 @@ const { createToken } = require("../../utils/jwt.util");
 
 async function auth(req, res) {
   try {
-    const checkService = await checkingServiceByPhone(req.body.phone);
+    const checkService = await checkingServiceByPhone(req.body.client.phone);
 
-    const client = await checkService();
+    const client = await checkService()
 
     if (!client.registered) {
       return res.json({
@@ -26,6 +26,7 @@ async function auth(req, res) {
 
     if (client.data.ban.banned) {
       return res.json({
+        registered: true,
         status: "banned",
         msg: "Kechirasiz, sizning akkauntingiz tizim tomonidan ban qilingan!",
         reason: client.data.ban.reason,
@@ -43,6 +44,7 @@ async function auth(req, res) {
       status: "ok",
       client: editedClient,
       token,
+      msg: "Tizimga kirildi!",
     });
   } catch (error) {
     return res.status(500).json({ error, message: error.message });

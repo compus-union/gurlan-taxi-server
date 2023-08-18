@@ -30,7 +30,7 @@ app.get("/", (req, res) => {
   res.json({ msg: "Hello from the server" });
 });
 
-app.use("/auth", require("./routes/auth.route"));
+app.use("/api/v1/auth", require("./routes/auth.route"));
 
 app.listen(process.env.PORT, () => {
   console.log(`Server started at ${process.env.PORT}`);
