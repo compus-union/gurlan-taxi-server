@@ -6,7 +6,7 @@ async function initMongoDB(url) {
     await mongoose.connect(url);
 
     return {
-      message: `Connected to mongodb, ${Date.now().toLocaleString()}`,
+      message: `Connected to mongodb, ${new Date().toISOString()}`,
     };
   } catch (error) {
     console.log(error);
