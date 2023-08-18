@@ -1,6 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const prisma = new PrismaClient();
 const { CLIENT_TOKEN } = require("../../configs/token.config");
 const {
@@ -9,12 +8,13 @@ const {
   editingLastLogin,
 } = require("../../services/auth/client.service");
 const { createToken } = require("../../utils/jwt.util");
+const { checkPassword } = require("../../utils/password.util");
 
 async function auth(req, res) {
   try {
     const checkService = await checkingServiceByPhone(req.body.client.phone);
 
-    const client = await checkService()
+    const client = await checkService();
 
     if (!client.registered) {
       return res.json({
@@ -30,6 +30,18 @@ async function auth(req, res) {
         status: "banned",
         msg: "Kechirasiz, sizning akkauntingiz tizim tomonidan ban qilingan!",
         reason: client.data.ban.reason,
+      });
+    }
+
+    const isPasswordCorrect = await checkPassword(
+      req.body.client.password,
+      client.data.password
+    );
+
+    if (!isPasswordCorrect) {
+      return res.json({
+        status: "incorrect-password",
+        msg: "Terilgan parol noto'g'ri. Boshqatdan urinib ko'ring",
       });
     }
 
