@@ -1,6 +1,4 @@
 const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcrypt");
-const prisma = new PrismaClient();
 const { CLIENT_TOKEN } = require("../../configs/token.config");
 const {
   checkingServiceByPhone,
