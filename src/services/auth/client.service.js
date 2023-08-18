@@ -13,11 +13,13 @@ async function checkingServiceByPhone(phone) {
         return {
           registered: true,
           data: foundClient,
+          status: "ok",
         };
       }
 
       return {
         registered: false,
+        status: "unregistered",
       };
     }
 
@@ -34,7 +36,7 @@ async function checkingServiceByPhone(phone) {
 async function creatingService(data) {
   try {
     const { fullname, phone, password } = data;
-    
+
     const hashedPass = await createPassword(password);
     const newOneId = await createId("client");
 
@@ -50,6 +52,8 @@ async function creatingService(data) {
     if (!newClient) {
       throw new Error("Couldn't create client");
     }
+
+    return { client: newClient, status: "ok" };
   } catch (error) {
     console.log(error.message);
   }
