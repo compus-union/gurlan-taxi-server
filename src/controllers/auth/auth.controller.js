@@ -2,15 +2,15 @@ const { PrismaClient } = require("@prisma/client");
 const { CLIENT_TOKEN } = require("../../configs/token.config");
 const {
   checkingServiceByPhone,
-  creatingService,
   editingLastLogin,
+  creatingService,
 } = require("../../services/auth/client.service");
 const { createToken } = require("../../utils/jwt.util");
 const { checkPassword } = require("../../utils/password.util");
+const prisma = new PrismaClient();
 
 async function auth(req, res) {
   try {
-    console.log(req.body);
     const checkService = await checkingServiceByPhone(req.body.client.phone);
 
     const client = await checkService.checkClientRegistered();
@@ -54,7 +54,7 @@ async function auth(req, res) {
     return res.json({
       status: "ok",
       registered: true,
-      client: editedClient,
+      client: editedClient.data,
       token,
       msg: "Tizimga kirildi!",
     });
@@ -66,9 +66,13 @@ async function auth(req, res) {
 
 async function register(req, res) {
   try {
-    const createdClient = await creatingService(req.body.client);
+    const { client } = req.body;
 
-    const token = await createToken({ ...req.body.client }, CLIENT_TOKEN);
+    const createdClient = await creatingService(client);
+
+    const token = await createToken({ ...client }, CLIENT_TOKEN);
+
+    console.log(token);
 
     return res.json({
       status: "ok",

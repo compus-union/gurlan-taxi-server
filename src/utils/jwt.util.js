@@ -7,6 +7,8 @@ async function createToken(payload, keyword, options) {
     if (!token) {
       throw new Error("Couldn't create the token");
     }
+
+    return token
   } catch (error) {
     console.log(error.message);
   }

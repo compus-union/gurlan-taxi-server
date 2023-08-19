@@ -22,10 +22,7 @@ initMongoDB(dbConfig.MONGO_URL)
     console.log(err);
   });
 
-  app.use("*", (req, res, next) => {
-    console.log(req.body);
-    next()
-  })
+
 
 io.on("connection", (socket) => {
   console.log("Socket connection set ", Date.now().toLocaleString());
