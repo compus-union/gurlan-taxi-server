@@ -1,13 +1,11 @@
-const { PrismaClient } = require("@prisma/client");
 const { CLIENT_TOKEN } = require("../../configs/token.config");
 const {
   checkingServiceByPhone,
   editingLastLogin,
   creatingService,
-} = require("../../services/auth/client.service");
+} = require("../../services/auth/auth.service");
 const { createToken } = require("../../utils/jwt.util");
 const { checkPassword } = require("../../utils/password.util");
-const prisma = new PrismaClient();
 
 async function auth(req, res) {
   try {
