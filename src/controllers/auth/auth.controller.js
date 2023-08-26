@@ -1,20 +1,17 @@
-const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const prisma = new PrismaClient();
 const { CLIENT_TOKEN } = require("../../configs/token.config");
 const {
   checkingServiceByPhone,
-  creatingService,
   editingLastLogin,
-} = require("../../services/auth/client.service");
+  creatingService,
+} = require("../../services/auth/auth.service");
 const { createToken } = require("../../utils/jwt.util");
+const { checkPassword } = require("../../utils/password.util");
 
 async function auth(req, res) {
   try {
-    const checkService = await checkingServiceByPhone(req.body.phone);
+    const checkService = await checkingServiceByPhone(req.body.client.phone);
 
-    const client = await checkService();
+    const client = await checkService.checkClientRegistered();
 
     if (!client.registered) {
       return res.json({
@@ -24,8 +21,21 @@ async function auth(req, res) {
       });
     }
 
-    if (client.data.ban.banned) {
+    const isPasswordCorrect = await checkPassword(
+      req.body.client.password,
+      client.data.password
+    );
+
+    if (!isPasswordCorrect) {
       return res.json({
+        status: "incorrect-password",
+        msg: "Terilgan parol noto'g'ri. Boshqatdan urinib ko'ring",
+      });
+    }
+
+    if (client.data.ban && client.data.ban.banned) {
+      return res.json({
+        registered: true,
         status: "banned",
         msg: "Kechirasiz, sizning akkauntingiz tizim tomonidan ban qilingan!",
         reason: client.data.ban.reason,
@@ -41,23 +51,30 @@ async function auth(req, res) {
 
     return res.json({
       status: "ok",
-      client: editedClient,
+      registered: true,
+      client: editedClient.data,
       token,
+      msg: "Tizimga kirildi!",
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ error, message: error.message });
   }
 }
 
 async function register(req, res) {
   try {
-    const createdClient = await creatingService(req.body.client);
+    const { client } = req.body;
 
-    const token = await createToken({ ...req.body.client }, CLIENT_TOKEN);
+    const createdClient = await creatingService(client);
+
+    const token = await createToken({ ...client }, CLIENT_TOKEN);
+
+    console.log(token);
 
     return res.json({
       status: "ok",
-      client: createdClient,
+      client: createdClient.client,
       token,
       msg: "Akkaunt ochildi!",
     });

@@ -1,14 +1,17 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 
-async function initMongoDB() {
+async function initMongoDB(url) {
   try {
-    await mongoose.connect(process.env.MONGO_URL);
+    await mongoose.connect(url);
 
-    console.log(`Connected to mongodb, ${Date.now().toLocaleString()}`);
+    return {
+      message: `Connected to mongodb, ${new Date().toISOString()}`,
+    };
   } catch (error) {
     console.log(error);
     console.log(error.message);
+    return error;
   }
 }
 

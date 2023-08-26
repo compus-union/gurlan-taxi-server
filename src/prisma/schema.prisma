@@ -16,12 +16,22 @@ model Client {
   createdAt  DateTime      @default(now())
   fullname   String
   phone      String        @unique
+  password   String
   bonus      String?
   moneySpent String?
   rides      Ride[]
   status     StatusClient?
-  ban        Json?
+  ban        Ban?          @relation(fields: [banId], references: [id])
   lastLogin  DateTime      @default(now())
+  banId      String?
+}
+
+model Ban {
+  id       String   @id @unique @default(uuid())
+  banned   Boolean
+  reason   String
+  bannedBy String
+  Client   Client[]
 }
 
 model Driver {

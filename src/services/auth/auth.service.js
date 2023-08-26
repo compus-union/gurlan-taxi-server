@@ -1,5 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const { createPassword } = require("../../utils/password.util");
+const { createId } = require("../../utils/idGenerator.util");
 
 async function checkingServiceByPhone(phone) {
   try {
@@ -11,11 +13,13 @@ async function checkingServiceByPhone(phone) {
         return {
           registered: true,
           data: foundClient,
+          status: "ok",
         };
       }
 
       return {
         registered: false,
+        status: "unregistered",
       };
     }
 
@@ -31,11 +35,25 @@ async function checkingServiceByPhone(phone) {
 
 async function creatingService(data) {
   try {
-    const newClient = await prisma.client.create({ data });
+    const { fullname, phone, password } = data;
+
+    const hashedPass = await createPassword(password);
+    const newOneId = await createId("client");
+
+    const newClient = await prisma.client.create({
+      data: {
+        fullname,
+        phone,
+        password: hashedPass,
+        oneId: newOneId,
+      },
+    });
 
     if (!newClient) {
       throw new Error("Couldn't create client");
     }
+
+    return { client: newClient, status: "ok" };
   } catch (error) {
     console.log(error.message);
   }

@@ -4,14 +4,20 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server-run": "nodemon src/index.js",
+    "psql-run": "npx prisma db push",
+    "psql-studio-run": "npx prisma studio",
+    "dev": "concurrently \"npm run server-run\" \"npm run psql-run\" \"npm run psql-studio-run\"",
+    "start": "concurrently \"npm run server-run\" \"npm run psql-run\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^5.1.1",
+    "axios": "^1.4.0",
     "bcrypt": "^5.1.0",
+    "compression": "^1.7.4",
     "concurrently": "^8.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
