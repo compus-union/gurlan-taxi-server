@@ -16,7 +16,7 @@ async function searchPlace(req, res) {
       });
     }
 
-    return res.json({ status: "ok", data: response.data });
+    return res.json({ status: "ok", data: response });
   } catch (error) {
     return res.json(error);
   }
