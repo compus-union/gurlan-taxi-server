@@ -88,6 +88,13 @@ async function checkSelfAccess(req, res, next) {
 
     return next();
   } catch (error) {
-    return res.status(500).json(error)
+    return res.status(500).json(error);
   }
 }
+
+module.exports = {
+  checkAvailability,
+  checkRegistered,
+  checkBan,
+  checkSelfAccess,
+};
