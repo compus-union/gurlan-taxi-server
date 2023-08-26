@@ -8,10 +8,20 @@ async function createToken(payload, keyword, options) {
       throw new Error("Couldn't create the token");
     }
 
-    return token
+    return token;
   } catch (error) {
     console.log(error.message);
   }
 }
 
-module.exports = { createToken };
+async function verifyToken(token, keyword) {
+  try {
+    const verifiedToken = jwt.verify(token, keyword);
+
+    return verifiedToken;
+  } catch (error) {
+    console.log(error.message);
+  }
+}
+
+module.exports = { createToken, verifyToken };

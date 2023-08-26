@@ -5,6 +5,6 @@ const {
   searchPlace,
 } = require("../controllers/geocoding/geocoding.controller");
 
-router.get("/search/:clientId/:place", searchPlace);
+router.get("/search/:oneId/:place", searchPlace);
 
 module.exports = router;
