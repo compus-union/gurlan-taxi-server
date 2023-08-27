@@ -68,9 +68,8 @@ async function register(req, res) {
 
     const createdClient = await creatingService(client);
 
-    const token = await createToken({ ...client }, CLIENT_TOKEN);
+    const token = await createToken({ ...createdClient.client }, CLIENT_TOKEN);
 
-    console.log(token);
 
     return res.json({
       status: "ok",

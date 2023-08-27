@@ -17,10 +17,10 @@ async function createToken(payload, keyword, options) {
 async function verifyToken(token, keyword) {
   try {
     const verifiedToken = jwt.verify(token, keyword);
-
+    
     return verifiedToken;
   } catch (error) {
-    console.log(error.message);
+    console.log(error);
   }
 }
 
