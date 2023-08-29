@@ -23,7 +23,6 @@ model Client {
   status     StatusClient?
   ban        Json?
   lastLogin  DateTime      @default(now())
-  banId      String?
 }
 
 model Driver {
