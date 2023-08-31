@@ -27,7 +27,7 @@ async function searchPlaceService(q) {
 
     return results;
   } catch (error) {
-    console.log(error);
+    console.log(error.message);
   }
 }
 
