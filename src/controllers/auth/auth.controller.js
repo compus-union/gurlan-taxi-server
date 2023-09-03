@@ -123,9 +123,12 @@ async function check(req, res) {
 
     const newToken = await createToken({ ...client }, CLIENT_TOKEN);
 
-    console.log("blat");
-
-    return res.json({ status: "ok", msg: "Hammasi ok", token: newToken, client });
+    return res.json({
+      status: "ok",
+      msg: "Hammasi ok",
+      token: newToken,
+      client,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json(error);

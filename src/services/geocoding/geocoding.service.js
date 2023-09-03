@@ -5,7 +5,7 @@ const axios = require("axios").default;
 async function searchPlaceService(q) {
   try {
     const response = await axios.get(GEOCODING_URL + "/search", {
-      params: { q: `${q} gurlan`, format: "json", addressdetails: 1 },
+      params: { q: `${q} Gurlan`, format: "json", addressdetails: 1 },
     });
 
     if (!response) {
@@ -19,7 +19,11 @@ async function searchPlaceService(q) {
     data.forEach(async (item) => {
       if (
         item.address.town === "Gurlan" ||
-        item.address.county === "Gurlan tumani"
+        item.address.town === "Gurlen" ||
+        item.address.town === "Gurlan" ||
+        item.address.town === "gurlan" ||
+        item.address.county === "Gurlan tumani" ||
+        item.address.county === "Gurlan Tumani"
       ) {
         results.push(item);
       }
