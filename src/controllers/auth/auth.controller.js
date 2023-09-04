@@ -1,11 +1,14 @@
 const { CLIENT_TOKEN } = require("../../configs/token.config");
+const { PrismaClient } = require("@prisma/client");
 const {
   checkingServiceByPhone,
   editingLastLogin,
   creatingService,
 } = require("../../services/auth/auth.service");
-const { createToken } = require("../../utils/jwt.util");
+const { createToken, verifyToken } = require("../../utils/jwt.util");
 const { checkPassword } = require("../../utils/password.util");
+
+const prisma = new PrismaClient();
 
 async function auth(req, res) {
   try {
@@ -68,9 +71,7 @@ async function register(req, res) {
 
     const createdClient = await creatingService(client);
 
-    const token = await createToken({ ...client }, CLIENT_TOKEN);
-
-    console.log(token);
+    const token = await createToken({ ...createdClient.client }, CLIENT_TOKEN);
 
     return res.json({
       status: "ok",
@@ -83,4 +84,55 @@ async function register(req, res) {
   }
 }
 
-module.exports = { register, auth };
+async function check(req, res) {
+  try {
+    const { oneId } = req.params;
+    const token = req.headers["authorization"].split(" ")[1];
+
+    if (!token) {
+      return res.json({ status: "forbidden", msg: "Token mavjud emas" });
+    }
+
+    const client = await prisma.client.findUnique({ where: { oneId } });
+
+    if (!client) {
+      return res.json({ status: "forbidden", msg: "Akkaunt mavjud emas" });
+    }
+
+    const verifiedToken = await verifyToken(token, CLIENT_TOKEN);
+
+    if (!verifiedToken) {
+      return res.json({ status: "forbidden", msg: "Token yaroqli emas" });
+    }
+
+    const matchingToken = (await verifiedToken.oneId) === client.oneId;
+
+    if (!matchingToken) {
+      return res.json({
+        status: "forbidden",
+        msg: "Token yaroqli emas (oneId problem)",
+      });
+    }
+
+    if (client.ban && client.ban.banned) {
+      return res.json({
+        status: "forbidden",
+        msg: `Akkaunt bloklangan: ${client.ban.reason}`,
+      });
+    }
+
+    const newToken = await createToken({ ...client }, CLIENT_TOKEN);
+
+    return res.json({
+      status: "ok",
+      msg: "Hammasi ok",
+      token: newToken,
+      client,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+module.exports = { register, auth, check };

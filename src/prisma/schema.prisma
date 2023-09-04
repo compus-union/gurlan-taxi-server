@@ -21,17 +21,8 @@ model Client {
   moneySpent String?
   rides      Ride[]
   status     StatusClient?
-  ban        Ban?          @relation(fields: [banId], references: [id])
+  ban        Json?
   lastLogin  DateTime      @default(now())
-  banId      String?
-}
-
-model Ban {
-  id       String   @id @unique @default(uuid())
-  banned   Boolean
-  reason   String
-  bannedBy String
-  Client   Client[]
 }
 
 model Driver {
