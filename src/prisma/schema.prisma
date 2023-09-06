@@ -13,7 +13,7 @@ datasource db {
 model Client {
   id         String        @id @unique @default(cuid())
   oneId      String        @unique
-  createdAt  DateTime      @default(now())
+  createdAt  DateTime
   fullname   String
   phone      String        @unique
   password   String
@@ -22,19 +22,29 @@ model Client {
   rides      Ride[]
   status     StatusClient?
   ban        Json?
-  lastLogin  DateTime      @default(now())
+  lastLogin  DateTime
 }
 
 model Driver {
-  id           String        @id @unique @default(cuid())
-  oneId        String        @unique
+  id           String                 @id @unique @default(cuid())
+  oneId        String                 @unique
   fullname     String
   phone        String[]
-  license      String
-  registration String
+  license      StatusLicenseDocuments @default(INVALID)
+  registration StatusLicenseDocuments @default(INVALID)
   rides        Ride[]
   status       StatusDriver?
-  ban          Json? // {banned: boolean, reason: "", by: ADMIN}
+  car          Car?
+}
+
+model Car {
+  id       String  @id @unique @default(cuid())
+  oneId    String  @unique
+  name     String
+  color    String
+  number   String
+  driver   Driver? @relation(fields: [driverId], references: [id])
+  driverId String? @unique
 }
 
 model Ride {
@@ -45,7 +55,7 @@ model Ride {
   from      Json
   to        Json
   price     String
-  startedAt DateTime   @default(now())
+  startedAt DateTime
   arrivedAt DateTime
   status    StatusRide
   clientId  String
@@ -53,20 +63,31 @@ model Ride {
 }
 
 enum StatusDriver {
-  FREE
-  GOINGTOCLIENT
-  WAITING
-  ONTHEWAY
+  FREE // Ready for requests
+  GOINGTOCLIENT // Has request, going to pick up the client
+  WAITING // Has client, waiting the client
+  ONTHEWAY // Has client, driving client to the destination
+  BANNED // Just fucked up
+  LIMITED // Registered, all the information is being checked by admins
+  OFFLINE // Not using the app
 }
 
 enum StatusClient {
-  REQUESTING
-  ONTHEWAY
-  OFFLINE
-  ONLINE
+  REQUESTING // Requesting a taxi
+  ONTHEWAY // Has taxi driver, going to the destination
+  OUT // Go out to somewhere during the ride, driver is waiting
+  OFFLINE // Not using the app
+  ONLINE // In the app, not requested yet
+  BANNED // Just fucked up
 }
 
 enum StatusRide {
   ACTIVE
   FINISHED
+}
+
+enum StatusLicenseDocuments {
+  VALID // Ready to use
+  INVALID // Not valid documents
+  NONE // No documents at all
 }
