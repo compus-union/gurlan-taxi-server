@@ -34,6 +34,7 @@ model Driver {
   registration StatusLicenseDocuments @default(INVALID)
   rides        Ride[]
   status       StatusDriver?
+  type         DriverTypes            @default(NOTMEASURED)
   car          Car?
 }
 
@@ -74,7 +75,7 @@ enum StatusDriver {
 
 enum StatusClient {
   REQUESTING // Requesting a taxi
-  ONTHEWAY // Has taxi driver, going to the destination
+  ONTHEWAY // Has taxi driver, going to the destinationz
   OUT // Go out to somewhere during the ride, driver is waiting
   OFFLINE // Not using the app
   ONLINE // In the app, not requested yet
@@ -90,4 +91,11 @@ enum StatusLicenseDocuments {
   VALID // Ready to use
   INVALID // Not valid documents
   NONE // No documents at all
+}
+
+enum DriverTypes {
+  COMFORT
+  STANDARD
+  DAMAS
+  NOTMEASURED
 }
