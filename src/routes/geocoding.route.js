@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 const {
   searchPlace,
-} = require("../controllers/geocoding/geocoding.controller");
+} = require("../controllers/geocoding.controller");
 const {
   checkSelfAccess,
   checkRegistered,
