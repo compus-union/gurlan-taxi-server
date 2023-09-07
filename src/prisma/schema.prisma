@@ -21,8 +21,9 @@ model Client {
   moneySpent String?
   rides      Ride[]
   status     StatusClient?
-  ban        Json?
+  ban        Json? // {ban: boolean, reason: string, admin: admin_id}
   lastLogin  DateTime
+  deleted    Boolean       @default(false)
 }
 
 model Driver {
@@ -30,11 +31,18 @@ model Driver {
   oneId        String                 @unique
   fullname     String
   phone        String[]
-  license      StatusLicenseDocuments @default(INVALID)
-  registration StatusLicenseDocuments @default(INVALID)
+  password     String                 @default("")
+  license      StatusLicenseDocuments @default(INVALID) // prava
+  registration StatusLicenseDocuments @default(INVALID) // mashina dokumenti
   rides        Ride[]
   status       StatusDriver?
   type         DriverTypes            @default(NOTMEASURED)
+  ban          Json? // {ban: boolean, reason: string, admin: admin_id}
+  approval     Json? // {approved: boolean, admin: admin_id}
+  createdAt    DateTime               @default(now())
+  lastOnline   DateTime?
+  account      String                 @default("0")
+  deleted      Boolean                @default(false)
   car          Car?
 }
 
@@ -46,6 +54,7 @@ model Car {
   number   String
   driver   Driver? @relation(fields: [driverId], references: [id])
   driverId String? @unique
+  deleted  Boolean @default(false)
 }
 
 model Ride {
@@ -61,21 +70,23 @@ model Ride {
   status    StatusRide
   clientId  String
   driverId  String
+  deleted   Boolean    @default(false)
 }
 
 enum StatusDriver {
-  FREE // Ready for requests
+  ONLINE // Ready for requests
   GOINGTOCLIENT // Has request, going to pick up the client
   WAITING // Has client, waiting the client
   ONTHEWAY // Has client, driving client to the destination
   BANNED // Just fucked up
   LIMITED // Registered, all the information is being checked by admins
   OFFLINE // Not using the app
+  APPROVED // approved by admins
 }
 
 enum StatusClient {
   REQUESTING // Requesting a taxi
-  ONTHEWAY // Has taxi driver, going to the destinationz
+  ONTHEWAY // Has taxi driver, going to the destination
   OUT // Go out to somewhere during the ride, driver is waiting
   OFFLINE // Not using the app
   ONLINE // In the app, not requested yet
@@ -97,5 +108,6 @@ enum DriverTypes {
   COMFORT
   STANDARD
   DAMAS
+  LABO
   NOTMEASURED
 }
