@@ -42,6 +42,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/auth", require("./routes/auth.route"));
+app.use("/api/v1/driver", require("./routes/driver.route"));
 app.use("/api/v1/geocoding", require("./routes/geocoding.route"));
 
 app.listen(process.env.PORT, () => {

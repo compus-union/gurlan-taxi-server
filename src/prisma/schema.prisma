@@ -43,6 +43,7 @@ model Driver {
   lastOnline   DateTime?
   account      String                 @default("0")
   deleted      Boolean                @default(false)
+  rating       Int[]                  @default([])
   car          Car?
 }
 
@@ -70,6 +71,15 @@ model Car {
   driver   Driver? @relation(fields: [driverId], references: [id])
   driverId String? @unique
   deleted  Boolean @default(false)
+}
+
+model SchoolTime {
+  id                 String   @id @unique @default(cuid())
+  oneId              String   @unique
+  createdAt          DateTime @default(now())
+  timeBetween        String[] // ["2023-09-08T20:03:21.217Z", "2023-09-08T20:03:21.217Z"]
+  timeBetweenInHours String[] // ["20:03:21", "20:03:21"]
+  disabled           Boolean?
 }
 
 model Ride {

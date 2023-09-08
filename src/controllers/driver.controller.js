@@ -68,7 +68,7 @@ async function validate(req, res) {
       data: {
         license: "VALID",
         registration: "VALID",
-        status: "APROVED",
+        status: "APPROVED",
         approval: { approved: true, admin: adminId },
       },
     });

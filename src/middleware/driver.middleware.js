@@ -6,6 +6,22 @@ const { DRIVER_TOKEN } = require("../configs/token.config");
 
 async function checkRegister(req, res, next) {
   try {
+    if (!req.body.driver) {
+      return res.json({
+        status: "bad",
+        msg: "Hamma qatorlarni to'ldiring",
+        field: "driver",
+      });
+    }
+
+    if (!req.body.car) {
+      return res.json({
+        status: "bad",
+        msg: "Hamma qatorlarni to'ldiring",
+        field: "car",
+      });
+    }
+
     const { fullname, phone, password } = req.body.driver;
     const { name, color, number } = req.body.car;
 
@@ -24,10 +40,17 @@ async function checkRegister(req, res, next) {
       });
     }
 
-    if (fullname.length < 3 && fullname.includes(" ")) {
+    if (fullname.length <= 3) {
       return res.json({
         status: "bad",
         msg: "Ism familiya 3 ta belgidan uzunroq bo'lishi kerak. Bo'sh joy bilan birga",
+      });
+    }
+
+    if (!phone) {
+      return res.json({
+        status: "bad",
+        msg: "Telefon raqam kiritilishi lozim.",
       });
     }
 

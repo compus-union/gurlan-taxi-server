@@ -5,17 +5,17 @@ const { ADMIN_TOKEN } = require("../configs/token.config");
 
 async function checkAvailability(req, res, next) {
   try {
-    const { oneId } = req.params;
+    const { adminId } = req.body;
 
     const admin = await prisma.admin.findUnique({
-      where: { oneId },
+      where: { oneId: adminId },
     });
 
     if (!admin) {
       return res.json({
         status: "forbidden",
         msg: "Admin akkaunti topilmadi",
-        id: oneId,
+        id: adminId,
       });
     }
 
@@ -53,17 +53,17 @@ async function checkRegistered(req, res, next) {
 
 async function checkBan(req, res, next) {
   try {
-    const { oneId } = req.params;
+    const { adminId } = req.body;
 
     const admin = await prisma.admin.findUnique({
-      where: { oneId },
+      where: { oneId: adminId },
     });
 
     if (admin.ban && admin.ban.banned) {
       return res.json({
         status: "forbidden",
         msg: "Sizning akkauntingiz tizimda bloklangan.",
-        by: admin.ban.admin,
+        ban: admin.ban,
       });
     }
 
@@ -75,15 +75,16 @@ async function checkBan(req, res, next) {
 
 async function checkSelfAccess(req, res, next) {
   try {
-    const { oneId } = req.params;
+    const { adminId } = req.body;
     const token = req.headers["authorization"].split(" ")[1];
 
     const verifiedToken = await verifyToken(token, ADMIN_TOKEN);
 
-    if (verifiedToken.oneId !== oneId) {
+    if (verifiedToken.oneId !== adminId) {
       return res.json({
         status: "forbidden",
         msg: "Sizda ruxsat yo'q (oneId is not same)",
+        ids: `${adminId}, ${verifiedToken.oneId}`,
       });
     }
 
