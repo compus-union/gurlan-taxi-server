@@ -3,8 +3,8 @@ const { PrismaClient } = require("@prisma/client");
 const { DRIVER_TOKEN } = require("../configs/token.config");
 const { TELEGRAM_BOT_TOKEN } = require("../configs/other.config");
 const { createId } = require("../utils/idGenerator.util");
-const { createPassword, checkPassword } = require("../utils/password.util");
-const { createToken, verifyToken } = require("../utils/jwt.util");
+const { createPassword } = require("../utils/password.util");
+const { createToken } = require("../utils/jwt.util");
 
 const prisma = new PrismaClient();
 
@@ -61,17 +61,22 @@ async function login(req, res) {
 
 async function validate(req, res) {
   try {
-    const { oneId, adminId } = req.body;
+    const { driverId, adminId } = req.body;
 
     const updateDriver = await prisma.driver.update({
-      where: { oneId },
+      where: { oneId: driverId },
       data: {
         license: "VALID",
         registration: "VALID",
-        status: "APPROVED",
+        status: "APROVED",
         approval: { approved: true, admin: adminId },
-        
       },
     });
-  } catch (error) {}
+
+    return res.json({ status: "ok", driver: updateDriver });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
 }
+
+module.exports = { register, login, validate };

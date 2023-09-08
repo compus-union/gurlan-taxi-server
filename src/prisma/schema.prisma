@@ -38,12 +38,27 @@ model Driver {
   status       StatusDriver?
   type         DriverTypes            @default(NOTMEASURED)
   ban          Json? // {ban: boolean, reason: string, admin: admin_id}
-  approval     Json? // {approved: boolean, admin: admin_id}
+  approval     Json? // {approved: boolean, admin: admin_id, date: date}
   createdAt    DateTime               @default(now())
   lastOnline   DateTime?
   account      String                 @default("0")
   deleted      Boolean                @default(false)
   car          Car?
+}
+
+model Admin {
+  id        String    @id @unique @default(cuid())
+  oneId     String    @unique
+  fullname  String
+  phone     String
+  email     String
+  password  String
+  type      AdminType @default(ADMIN)
+  drivers   String[]  @default([])
+  createdAt DateTime  @default(now())
+  approval  Json? // {approved: boolean, admin: admin_id, date: date} -> super admin tomonidan
+  deleted   Boolean   @default(false)
+  ban       Json? // {ban: boolean, reason: string, admin: admin_id} -> super admin tomonidan
 }
 
 model Car {
@@ -110,4 +125,9 @@ enum DriverTypes {
   DAMAS
   LABO
   NOTMEASURED
+}
+
+enum AdminType {
+  ADMIN
+  SUPERADMIN
 }
