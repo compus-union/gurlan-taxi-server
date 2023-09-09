@@ -73,13 +73,19 @@ model Car {
   deleted  Boolean @default(false)
 }
 
-model SchoolTime {
-  id                 String   @id @unique @default(cuid())
-  oneId              String   @unique
-  createdAt          DateTime @default(now())
-  timeBetween        String[] // ["2023-09-08T20:03:21.217Z", "2023-09-08T20:03:21.217Z"]
-  timeBetweenInHours String[] // ["20:03:21", "20:03:21"]
-  disabled           Boolean?
+model PrimeTime {
+  id             String          @id @unique @default(cuid())
+  oneId          String          @unique
+  name           String
+  status         StatusPrimeTime @default(DISABLED)
+  startTime      String[]
+  finishTime     String[]
+  startTimeFull  String
+  finishTimeFull String
+  excWeekDays    String
+  excMonth       String
+  admin          Json? // {id: admin_id, changed: boolean}
+  deleted        Boolean         @default(false)
 }
 
 model Ride {
@@ -140,4 +146,9 @@ enum DriverTypes {
 enum AdminType {
   ADMIN
   SUPERADMIN
+}
+
+enum StatusPrimeTime {
+  ENABLED
+  DISABLED
 }
