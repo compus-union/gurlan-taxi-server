@@ -7,9 +7,12 @@ const { Server } = require("socket.io");
 const dbConfig = require("./configs/db.config");
 const { initMongoDB } = require("./services/db/mongo.service");
 const compression = require("compression");
+const { EventEmitter } = require("events");
 
 const server = http.createServer(app);
 const io = new Server(server);
+
+const event = new EventEmitter();
 
 app.use(express.json());
 app.use(compression());
@@ -48,3 +51,5 @@ app.use("/api/v1/geocoding", require("./routes/geocoding.route"));
 app.listen(process.env.PORT, () => {
   console.log(`Server started at ${process.env.PORT}`);
 });
+
+module.exports = { event };
