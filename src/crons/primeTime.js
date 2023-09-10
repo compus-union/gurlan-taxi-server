@@ -4,11 +4,11 @@ const cron = require("node-cron");
 
 async function cronInitialize() {
   const enableSchedule = async (time) => {
-    // const fStartTime = time.startTime.reverse().join(" "); // [s, m, h]
-    // const startTimeFullPattern = `${fStartTime} * ${time.excMonth} ${time.excWeekDays}`;
+    const fStartTime = time.startTime.reverse().join(" "); // [s, m, h]
+    const startTimeFullPattern = `${fStartTime} * ${time.excMonth} ${time.excWeekDays}`;
 
     const cronJob = cron.schedule(
-      "* * * * * *",
+      startTimeFullPattern,
       () => {
         // Prime time is enabled
         console.log("Enable schedule worked");
@@ -20,12 +20,12 @@ async function cronInitialize() {
   };
 
   const disableSchedule = async (time) => {
-    // const fEndTime = time.finishTime.reverse().join(" "); // [s, m, h]
+    const fEndTime = time.finishTime.reverse().join(" "); // [s, m, h]
 
-    // const fEndTimeFullPattern = `${fEndTime} * ${time.excMonth} ${time.excWeekDays}`;
+    const fEndTimeFullPattern = `${fEndTime} * ${time.excMonth} ${time.excWeekDays}`;
 
     const cronJob = cron.schedule(
-      "* * * * * *",
+      fEndTimeFullPattern,
       () => {
         // Prime time is disabled
         console.log("Disable schedule worked");
@@ -41,27 +41,5 @@ async function cronInitialize() {
     disableSchedule,
   };
 }
-
-async function runSchedule() {
-  const instance = await cronInitialize();
-
-  const { cronJob: enableCronjob } = await instance.enableSchedule();
-  const { cronJob: disableCronjob } = await instance.disableSchedule();
-
-  enableCronjob.start()
-  disableCronjob.start()
-
-  setTimeout(() => {
-    enableCronjob.stop()
-    console.log('Enable schedule stopped');
-  }, 4000)
-
-  setTimeout(() => {
-    disableCronjob.stop()
-    console.log('Disable schedule stopped');
-  }, 8000)
-}
-
-runSchedule()
 
 module.exports = { cronInitialize };
