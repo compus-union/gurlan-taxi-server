@@ -1,7 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const {
   searchPlaceService,
-} = require("../../services/geocoding/geocoding.service");
+} = require("../services/geocoding/geocoding.service");
 
 async function searchPlace(req, res) {
   try {

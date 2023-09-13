@@ -21,20 +21,71 @@ model Client {
   moneySpent String?
   rides      Ride[]
   status     StatusClient?
-  ban        Json?
+  ban        Json? // {ban: boolean, reason: string, admin: admin_id}
   lastLogin  DateTime      @default(now())
+  deleted    Boolean       @default(false)
 }
 
 model Driver {
-  id           String        @id @unique @default(cuid())
-  oneId        String        @unique
+  id           String                 @id @unique @default(cuid())
+  oneId        String                 @unique
   fullname     String
   phone        String[]
-  license      String
-  registration String
+  password     String                 @default("")
+  license      StatusLicenseDocuments @default(INVALID) // prava
+  registration StatusLicenseDocuments @default(INVALID) // mashina dokumenti
   rides        Ride[]
   status       StatusDriver?
-  ban          Json? // {banned: boolean, reason: "", by: ADMIN}
+  type         DriverTypes            @default(NOTMEASURED)
+  ban          Json? // {ban: boolean, reason: string, admin: admin_id}
+  approval     Json? // {approved: boolean, admin: admin_id, date: date}
+  createdAt    DateTime               @default(now())
+  lastOnline   DateTime?
+  account      String                 @default("0")
+  deleted      Boolean                @default(false)
+  rating       Int[]                  @default([])
+  car          Car?
+}
+
+model Admin {
+  id        String    @id @unique @default(cuid())
+  oneId     String    @unique
+  fullname  String
+  phone     String
+  email     String
+  password  String
+  type      AdminType @default(ADMIN)
+  drivers   String[]  @default([])
+  createdAt DateTime  @default(now())
+  approval  Json? // {approved: boolean, admin: admin_id, date: date} -> super admin tomonidan
+  deleted   Boolean   @default(false)
+  ban       Json? // {ban: boolean, reason: string, admin: admin_id} -> super admin tomonidan
+}
+
+model Car {
+  id       String  @id @unique @default(cuid())
+  oneId    String  @unique
+  name     String
+  color    String
+  number   String
+  driver   Driver? @relation(fields: [driverId], references: [id])
+  driverId String? @unique
+  deleted  Boolean @default(false)
+}
+
+model PrimeTime {
+  id             String          @id @unique @default(cuid())
+  oneId          String          @unique
+  name           String
+  status         StatusPrimeTime @default(DISABLED)
+  startTime      String[] // [h, m, s]
+  finishTime     String[] // [h, m, s]
+  startTimeFull  String
+  finishTimeFull String
+  excWeekDays    String
+  excMonth       String
+  admin          Json? // {id: admin_id, changed: boolean}
+  deleted        Boolean         @default(false)
 }
 
 model Ride {
@@ -45,28 +96,59 @@ model Ride {
   from      Json
   to        Json
   price     String
-  startedAt DateTime   @default(now())
+  startedAt DateTime
   arrivedAt DateTime
   status    StatusRide
   clientId  String
   driverId  String
+  deleted   Boolean    @default(false)
 }
 
 enum StatusDriver {
-  FREE
-  GOINGTOCLIENT
-  WAITING
-  ONTHEWAY
+  ONLINE // Ready for requests
+  GOINGTOCLIENT // Has request, going to pick up the client
+  WAITING // Has client, waiting the client
+  ONTHEWAY // Has client, driving client to the destination
+  BANNED // Just fucked up
+  LIMITED // Registered, all the information is being checked by admins
+  OFFLINE // Not using the app
+  APPROVED // approved by admins
 }
 
 enum StatusClient {
-  REQUESTING
-  ONTHEWAY
-  OFFLINE
-  ONLINE
+  REQUESTING // Requesting a taxi
+  ONTHEWAY // Has taxi driver, going to the destination
+  OUT // Go out to somewhere during the ride, driver is waiting
+  OFFLINE // Not using the app
+  ONLINE // In the app, not requested yet
+  BANNED // Just fucked up
 }
 
 enum StatusRide {
   ACTIVE
   FINISHED
+}
+
+enum StatusLicenseDocuments {
+  VALID // Ready to use
+  INVALID // Not valid documents
+  NONE // No documents at all
+}
+
+enum DriverTypes {
+  COMFORT
+  STANDARD
+  DAMAS
+  LABO
+  NOTMEASURED
+}
+
+enum AdminType {
+  ADMIN
+  SUPERADMIN
+}
+
+enum StatusPrimeTime {
+  ENABLED
+  DISABLED
 }

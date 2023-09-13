@@ -2,6 +2,8 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { createPassword } = require("../../utils/password.util");
 const { createId } = require("../../utils/idGenerator.util");
+const moment = require("moment")
+
 
 async function checkingServiceByPhone(phone) {
   try {
@@ -46,6 +48,8 @@ async function creatingService(data) {
         phone,
         password: hashedPass,
         oneId: newOneId,
+        createdAt: new Date(moment().format()),
+        lastLogin: new Date(moment().format())
       },
     });
 

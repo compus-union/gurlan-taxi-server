@@ -26,4 +26,10 @@ async function checkPassword(plainText, hash) {
   }
 }
 
-module.exports = { createPassword, checkPassword };
+async function containsUppercase(plainText) {
+  const pattern = /[A-Z]/;
+
+  return pattern.test(plainText);
+}
+
+module.exports = { createPassword, checkPassword, containsUppercase };
