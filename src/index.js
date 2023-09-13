@@ -42,18 +42,20 @@ io.on("connection", (socket) => {
 const initCronJob = async () => {
   const { enableSchedule, disableSchedule } = await cronInitialize();
 
-  mainEvent.on("primeTimeInit", async (data) => {
-    const { cronJob: enable } = await enableSchedule(data);
-    const { cronJob: disable } = await disableSchedule(data);
-
-    enable.start();
-    disable.start();
-
-    console.log("Cronjob initalization added");
-  });
+  return { enableSchedule, disableSchedule };
 };
 
-initCronJob()
+mainEvent.on("primeTimeInit", async (data) => {
+  const { disableSchedule, enableSchedule } = await initCronJob();
+
+  const { cronJob: enable } = await enableSchedule(data);
+  const { cronJob: disable } = await disableSchedule(data);
+
+  enable.start();
+  disable.start();  
+
+  console.log("Cronjob initalization added");
+});
 
 app.get("/", (req, res) => {
   res.json({ msg: "Hello from the server" });
