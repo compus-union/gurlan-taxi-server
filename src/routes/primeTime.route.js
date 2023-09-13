@@ -11,11 +11,11 @@ const {
 
 router.post(
   "/create",
-  checkAvailability,
-  checkRegistered,
-  checkAdmin,
-  checkBan,
-  checkSuperAdmin,
+  //   checkAvailability,
+  //   checkRegistered,
+  //   checkAdmin,
+  //   checkBan,
+  //   checkSuperAdmin,
   createPrimeTime
 );
 

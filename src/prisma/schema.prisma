@@ -78,8 +78,8 @@ model PrimeTime {
   oneId          String          @unique
   name           String
   status         StatusPrimeTime @default(DISABLED)
-  startTime      String[]
-  finishTime     String[]
+  startTime      String[] // [h, m, s]
+  finishTime     String[] // [h, m, s]
   startTimeFull  String
   finishTimeFull String
   excWeekDays    String

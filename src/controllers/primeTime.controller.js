@@ -24,13 +24,12 @@ async function createPrimeTime(req, res) {
       data: {
         startTimeFull,
         startTime,
+        finishTime,
         excMonth,
         excWeekDays,
         finishTimeFull,
         name,
-        newId,
         oneId: newId,
-        finishTime,
       },
     });
 
@@ -43,6 +42,7 @@ async function createPrimeTime(req, res) {
       name,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json(error);
   }
 }

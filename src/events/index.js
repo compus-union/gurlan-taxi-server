@@ -6,7 +6,6 @@ class MainEvent extends EventEmitter {
   addListener(eventName, fn) {
     this.listeners[eventName] = this.listeners[eventName] || [];
     this.listeners[eventName].push(fn);
-    console.log(this.listeners);  
     return this;
   }
 

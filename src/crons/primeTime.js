@@ -1,17 +1,27 @@
 const express = require("express");
-const app = express();
 const cron = require("node-cron");
+const { PrismaClient } = require("@prisma/client");
+const {mainEvent} = require("../events")
+
+const prisma = new PrismaClient();
 
 async function cronInitialize() {
   const enableSchedule = async (time) => {
     const fStartTime = time.startTime.reverse().join(" "); // [s, m, h]
     const startTimeFullPattern = `${fStartTime} * ${time.excMonth} ${time.excWeekDays}`;
 
+    console.log(startTimeFullPattern);
+
     const cronJob = cron.schedule(
       startTimeFullPattern,
-      () => {
+      async () => {
         // Prime time is enabled
-        console.log("Enable schedule worked");
+        const updatedEnabledTime = await prisma.primeTime.update({
+          where: { id: time.id },
+          data: { status: "ENABLED" },
+        });
+
+        console.log("Enable schedule worked: ", updatedEnabledTime.status);
       },
       { scheduled: false }
     );
@@ -21,14 +31,20 @@ async function cronInitialize() {
 
   const disableSchedule = async (time) => {
     const fEndTime = time.finishTime.reverse().join(" "); // [s, m, h]
+    const endTimeFullPattern = `${fEndTime} * ${time.excMonth} ${time.excWeekDays}`;
 
-    const fEndTimeFullPattern = `${fEndTime} * ${time.excMonth} ${time.excWeekDays}`;
+    console.log(endTimeFullPattern);
 
     const cronJob = cron.schedule(
-      fEndTimeFullPattern,
-      () => {
+      endTimeFullPattern,
+      async () => {
         // Prime time is disabled
-        console.log("Disable schedule worked");
+        const updatedEnabledTime = await prisma.primeTime.update({
+          where: { id: time.id },
+          data: { status: "DISABLED" },
+        });
+
+        console.log("Disable schedule worked: ", updatedEnabledTime.status);
       },
       { scheduled: false }
     );
