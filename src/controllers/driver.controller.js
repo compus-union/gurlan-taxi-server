@@ -79,4 +79,24 @@ async function validate(req, res) {
   }
 }
 
+async function invalidate(req, res, next) {
+  try {
+    const { driverId, adminId } = req.body;
+
+    const updateDriver = await prisma.driver.update({
+      where: { oneId: driverId },
+      data: {
+        license: "INVALID",
+        registration: "INVALID",
+        status: "BANNED",
+        approval: { approved: false, admin: adminId },
+        deleted: true,
+      },
+    });
+
+    return res.json({ status: "ok", driver: updateDriver });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+}
 module.exports = { register, login, validate };

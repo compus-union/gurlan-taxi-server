@@ -13,7 +13,7 @@ datasource db {
 model Client {
   id         String        @id @unique @default(cuid())
   oneId      String        @unique
-  createdAt  DateTime
+  createdAt  DateTime      @default(now())
   fullname   String
   phone      String        @unique
   password   String
@@ -22,7 +22,7 @@ model Client {
   rides      Ride[]
   status     StatusClient?
   ban        Json? // {ban: boolean, reason: string, admin: admin_id}
-  lastLogin  DateTime
+  lastLogin  DateTime      @default(now())
   deleted    Boolean       @default(false)
 }
 
