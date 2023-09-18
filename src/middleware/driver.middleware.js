@@ -47,6 +47,15 @@ async function checkRegister(req, res, next) {
       });
     }
 
+    const validationCyrilic = /[\wа-я]+/gi;
+
+    if (validationCyrilic.test(fullname)) {
+      return res.json({
+        status: "bad",
+        msg: "Ism familiya lotin harflarida kiritilishi lozim",
+      });
+    }
+
     if (!phone) {
       return res.json({
         status: "bad",
@@ -91,6 +100,13 @@ async function checkRegister(req, res, next) {
       });
     }
 
+    if (validationCyrilic.test(password)) {
+      return res.json({
+        status: "bad",
+        msg: "Parol lotin harflarida kiritilishi lozim",
+      });
+    }
+
     if (!name) {
       return res.json({
         status: "bad",
@@ -116,7 +132,10 @@ async function checkRegister(req, res, next) {
     }
 
     return next();
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+    return res.json(error);
+  }
 }
 
 async function checkLogin(req, res, next) {
@@ -140,7 +159,9 @@ async function checkLogin(req, res, next) {
     }
 
     return next();
-  } catch (error) {}
+  } catch (error) {
+    return res.json(error);
+  }
 }
 
 async function checkAvailability(req, res, next) {
