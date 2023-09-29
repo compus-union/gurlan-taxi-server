@@ -5,6 +5,11 @@ const { TELEGRAM_BOT_TOKEN } = require("../configs/other.config");
 const { createId } = require("../utils/idGenerator.util");
 const { createPassword } = require("../utils/password.util");
 const { createToken } = require("../utils/jwt.util");
+const { sendPictures } = require("../services/telegram");
+const { upload } = require("../uploads");
+const { promises } = require("fs");
+const { checkPassword } = require("../utils/password.util");
+const moment = require("moment");
 
 const prisma = new PrismaClient();
 
@@ -79,7 +84,7 @@ async function validate(req, res) {
   }
 }
 
-async function invalidate(req, res, next) {
+async function invalidate(req, res) {
   try {
     const { driverId, adminId } = req.body;
 
@@ -99,4 +104,64 @@ async function invalidate(req, res, next) {
     return res.status(500).json(error);
   }
 }
-module.exports = { register, login, validate };
+
+async function sendImages(req, res) {
+  try {
+    const { oneId, password } = req.body;
+
+    const driver = await prisma.driver.findUnique({
+      where: { oneId },
+      include: { car: true },
+    });
+
+    const files = await promises.readdir("../uploads");
+
+    const filteredFiles = files.filter((item) => {
+      return item.includes("haydovchi");
+    });
+
+    const result = await sendPictures(filteredFiles, {
+      oneId,
+      fullname: driver.fullname,
+      phone: driver.phone,
+      password,
+      carName: driver.car.name,
+      carColor: driver.car.color,
+      carNumber: driver.car.number,
+      date: moment().format(),
+    });
+
+    return res.json({ status: "ok", msg: "Images sent", result });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+}
+
+async function checkIfExists(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const driver = await prisma.driver.findUnique({ where: { oneId } });
+    const car = await prisma.car.findUnique({ where: { driverId: driver.id } });
+
+    const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
+
+    return res.json({
+      status: "ok",
+      msg: "Akkaunt topildi",
+      token: newToken,
+      driver,
+      car
+    });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+}
+module.exports = {
+  register,
+  login,
+  validate,
+  invalidate,
+  sendImages,
+  checkIfExists,
+};

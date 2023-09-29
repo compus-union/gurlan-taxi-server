@@ -1,14 +1,21 @@
 require("dotenv").config();
 const express = require("express");
+const { upload } = require("../uploads");
 const router = express.Router();
 const {
   register,
   login,
   validate,
+  sendImages,
+  checkIfExists,
 } = require("../controllers/driver.controller");
 const {
   checkRegister,
   checkLogin,
+  checkImages,
+  checkAvailability: driverAvailability,
+  checkRegistered: driverRegistered,
+  checkBan: driverBan,
 } = require("../middleware/driver.middleware");
 const {
   checkAdmin,
@@ -26,6 +33,14 @@ router.post(
   checkBan,
   checkAdmin,
   validate
+);
+router.post("/send-images", checkImages, upload.array("images"), sendImages);
+router.get(
+  "/check/:oneId",
+  driverAvailability,
+  driverRegistered,
+  driverBan,
+  checkIfExists
 );
 
 module.exports = router;

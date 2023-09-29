@@ -47,12 +47,11 @@ async function checkRegister(req, res, next) {
       });
     }
 
-    const validationCyrilic = /[\wа-я]+/gi;
-
-    if (validationCyrilic.test(fullname)) {
+    const validationCyrilic = /^[a-zA-Z]+(\s[a-zA-Z]+)*$/;
+    if (!validationCyrilic.test(fullname)) {
       return res.json({
         status: "bad",
-        msg: "Ism familiya lotin harflarida kiritilishi lozim",
+        msg: "Ism familiya lotin harflarida raqam va belgilarsiz kiritilishi lozim.",
       });
     }
 
@@ -254,6 +253,39 @@ async function checkSelfAccess(req, res, next) {
   }
 }
 
+async function checkImages(req, res, next) {
+  try {
+    const { oneId, password } = req.body;
+
+    if (!oneId) {
+      return res.json({ status: "bad", msg: "oneId kiritilishi lozim." });
+    }
+
+    if (!password) {
+      return res.json({ status: "bad", msg: "Password kiritilishi lozim." });
+    }
+
+    const driver = await prisma.driver.findUnique({
+      where: { oneId },
+    });
+
+    if (!driver) {
+      return res.json({
+        status: "bad",
+        msg: "Haydovchi topilmadi bu oneId boyicha.",
+      });
+    }
+
+    if (!req.files) {
+      return res.json({ status: "bad", msg: "Rasmlar topilmadi." });
+    }
+
+    return next();
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+}
+
 module.exports = {
   checkRegister,
   checkAvailability,
@@ -261,4 +293,5 @@ module.exports = {
   checkBan,
   checkSelfAccess,
   checkLogin,
+  checkImages,
 };

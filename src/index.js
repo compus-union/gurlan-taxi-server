@@ -52,7 +52,7 @@ mainEvent.on("primeTimeInit", async (data) => {
   const { cronJob: disable } = await disableSchedule(data);
 
   enable.start();
-  disable.start();  
+  disable.start();
 
   console.log("Cronjob initalization added");
 });
