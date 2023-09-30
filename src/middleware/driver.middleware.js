@@ -219,13 +219,14 @@ async function checkBan(req, res, next) {
       where: { oneId },
     });
 
-    if (driver.ban && driver.ban.banned) {
+    if (driver.ban.banned) {
       return res.json({
         status: "forbidden",
         msg: "Sizning akkauntingiz tizimda bloklangan.",
         ban: driver.ban,
       });
     }
+
 
     return next();
   } catch (error) {
@@ -255,7 +256,7 @@ async function checkSelfAccess(req, res, next) {
 
 async function checkImages(req, res, next) {
   try {
-    const { oneId, password } = req.body;
+    const { oneId, password } = req.params;
 
     if (!oneId) {
       return res.json({ status: "bad", msg: "oneId kiritilishi lozim." });
@@ -275,6 +276,8 @@ async function checkImages(req, res, next) {
         msg: "Haydovchi topilmadi bu oneId boyicha.",
       });
     }
+
+    console.log(req.file);
 
     if (!req.files) {
       return res.json({ status: "bad", msg: "Rasmlar topilmadi." });

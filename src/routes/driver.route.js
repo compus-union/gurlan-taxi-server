@@ -8,6 +8,7 @@ const {
   validate,
   sendImages,
   checkIfExists,
+  checkIfValidated,
 } = require("../controllers/driver.controller");
 const {
   checkRegister,
@@ -34,13 +35,24 @@ router.post(
   checkAdmin,
   validate
 );
-router.post("/send-images", checkImages, upload.array("images"), sendImages);
+router.post(
+  "/send-images/:oneId/:password",
+  upload.array("images"),
+  sendImages
+);
 router.get(
   "/check/:oneId",
   driverAvailability,
   driverRegistered,
   driverBan,
   checkIfExists
+);
+router.get(
+  "/check-validation/:oneId",
+  driverAvailability,
+  driverRegistered,
+  driverBan,
+  checkIfValidated
 );
 
 module.exports = router;

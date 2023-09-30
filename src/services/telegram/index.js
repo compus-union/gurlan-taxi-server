@@ -4,6 +4,7 @@ const {
   TELEGRAM_BOT_TOKEN,
   TELEGRAM_CHAT_ID,
 } = require("../../configs/other.config");
+const path = require("path");
 
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
@@ -16,6 +17,7 @@ const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
 const sendPictures = async (urls, details) => {
   try {
+    console.log(urls);
     const result = await bot.telegram.sendMediaGroup(TELEGRAM_CHAT_ID, [
       {
         parse_mode: "HTML",
@@ -30,29 +32,37 @@ const sendPictures = async (urls, details) => {
         <b>🎨${details.carColor}</b>
         <b>⌚${details.date}</b>
         `,
-        media: `../../uploads/${urls[0]}`,
+        media: {
+          source: path.join(__dirname, `../../uploads/${urls[0]}`),
+        },
         type: "photo",
       },
       {
         parse_mode: "HTML",
-        media: `../../uploads/${urls[1]}`,
+        media: {
+          source: path.join(__dirname, `../../uploads/${urls[1]}`),
+        },
         type: "photo",
       },
       {
         parse_mode: "HTML",
-        media: `../../uploads/${urls[2]}`,
+        media: {
+          source: path.join(__dirname, `../../uploads/${urls[2]}`),
+        },
         type: "photo",
       },
       {
         parse_mode: "HTML",
-        media: `../../uploads/${urls[3]}`,
+        media: {
+          source: path.join(__dirname, `../../uploads/${urls[3]}`),
+        },
         type: "photo",
       },
     ]);
 
     return result;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 };
 

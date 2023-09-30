@@ -29,6 +29,8 @@ async function register(req, res) {
         fullname,
         password: hashedPass,
         phone,
+        ban: { banned: false, admin: "", reason: "" },
+        approval: { approved: false, admin: "", date: "" },
         car: {
           create: {
             oneId: newCarId,
@@ -107,14 +109,14 @@ async function invalidate(req, res) {
 
 async function sendImages(req, res) {
   try {
-    const { oneId, password } = req.body;
+    const { oneId, password } = req.params
 
     const driver = await prisma.driver.findUnique({
       where: { oneId },
       include: { car: true },
     });
 
-    const files = await promises.readdir("../uploads");
+    const files = await promises.readdir("./src/uploads"); 
 
     const filteredFiles = files.filter((item) => {
       return item.includes("haydovchi");
@@ -131,8 +133,11 @@ async function sendImages(req, res) {
       date: moment().format(),
     });
 
-    return res.json({ status: "ok", msg: "Images sent", result });
+    console.log(result);
+
+    return res.json({ status: "ok", msg: "Images sent", filteredFiles, result  });
   } catch (error) {
+    console.log(error);
     return res.status(500).json(error);
   }
 }
@@ -151,7 +156,33 @@ async function checkIfExists(req, res) {
       msg: "Akkaunt topildi",
       token: newToken,
       driver,
-      car
+      car,
+    });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+}
+
+async function checkIfValidated(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const driver = await prisma.driver.findUnique({ where: { oneId } });
+
+    if (!driver.approval || !driver.approval.approved) {
+      console.log("comeon");
+      return res.json({ status: "bad", msg: "Hali kutasiz :)" });
+    }
+
+    const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
+    const car = await prisma.car.findUnique({ where: { driverId: driver.id } });
+
+    return res.json({
+      car,
+      driver,
+      token: newToken,
+      msg: "Sizning ma'lumotlaringiz tasdiqlandi",
+      status: "ok",
     });
   } catch (error) {
     return res.status(500).json(error);
@@ -164,4 +195,5 @@ module.exports = {
   invalidate,
   sendImages,
   checkIfExists,
+  checkIfValidated,
 };
