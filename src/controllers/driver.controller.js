@@ -135,7 +135,7 @@ async function sendImages(req, res) {
 
     console.log(result);
 
-    return res.json({ status: "ok", msg: "Images sent", filteredFiles, result  });
+    return res.json({ status: "ok", msg: "Rasmlar jo'natildi", filteredFiles, result  });
   } catch (error) {
     console.log(error);
     return res.status(500).json(error);
