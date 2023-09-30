@@ -46,7 +46,7 @@ async function register(req, res) {
 
     const token = await createToken({ ...newDriver }, DRIVER_TOKEN);
 
-    return res.json({ status: "ok", token, driver: newDriver, car: newCar });
+    return res.json({ status: "ok", token, driver: newDriver, car: newCar, msg: "Ro'yxatdan o'tish bajarildi." });
   } catch (error) {
     return res.status(500).json(error);
   }
