@@ -1,6 +1,6 @@
 const { PrismaClient, StatusDriver } = require("@prisma/client");
 const prisma = new PrismaClient();
-const { containsUppercase } = require("../utils/password.util");
+const { containsUppercase, checkPassword } = require("../utils/password.util");
 const { verifyToken } = require("../utils/jwt.util");
 const { DRIVER_TOKEN } = require("../configs/token.config");
 
@@ -227,7 +227,6 @@ async function checkBan(req, res, next) {
       });
     }
 
-
     return next();
   } catch (error) {
     return res.status(500).json(error);
@@ -277,10 +276,10 @@ async function checkImages(req, res, next) {
       });
     }
 
-    console.log(req.file);
+    const passwordMatch = await checkPassword(password, driver.password);
 
-    if (!req.files) {
-      return res.json({ status: "bad", msg: "Rasmlar topilmadi." });
+    if (!passwordMatch) {
+      return res.json({ status: "bad", msg: "Kiritilgan parol noto'g'ri" });
     }
 
     return next();

@@ -1,15 +1,13 @@
 require("dotenv").config();
 const { PrismaClient } = require("@prisma/client");
 const { DRIVER_TOKEN } = require("../configs/token.config");
-const { TELEGRAM_BOT_TOKEN } = require("../configs/other.config");
 const { createId } = require("../utils/idGenerator.util");
 const { createPassword } = require("../utils/password.util");
 const { createToken } = require("../utils/jwt.util");
 const { sendPictures } = require("../services/telegram");
-const { upload } = require("../uploads");
 const { promises } = require("fs");
-const { checkPassword } = require("../utils/password.util");
 const moment = require("moment");
+const path = require("path");
 
 const prisma = new PrismaClient();
 
@@ -46,7 +44,13 @@ async function register(req, res) {
 
     const token = await createToken({ ...newDriver }, DRIVER_TOKEN);
 
-    return res.json({ status: "ok", token, driver: newDriver, car: newCar, msg: "Ro'yxatdan o'tish bajarildi." });
+    return res.json({
+      status: "ok",
+      token,
+      driver: newDriver,
+      car: newCar,
+      msg: "Ro'yxatdan o'tish bajarildi.",
+    });
   } catch (error) {
     return res.status(500).json(error);
   }
@@ -109,14 +113,14 @@ async function invalidate(req, res) {
 
 async function sendImages(req, res) {
   try {
-    const { oneId, password } = req.params
+    const { oneId, password } = req.params;
 
     const driver = await prisma.driver.findUnique({
       where: { oneId },
       include: { car: true },
     });
 
-    const files = await promises.readdir("./src/uploads"); 
+    const files = await promises.readdir("./src/uploads");
 
     const filteredFiles = files.filter((item) => {
       return item.includes("haydovchi");
@@ -133,9 +137,20 @@ async function sendImages(req, res) {
       date: moment().format(),
     });
 
-    console.log(result);
+    if (!result) {
+      return res.json({ status: "bad", msg: "Rasmlar yuborilmadi." });
+    }
 
-    return res.json({ status: "ok", msg: "Rasmlar jo'natildi", filteredFiles, result  });
+    filteredFiles.forEach(async (item) => {
+      await promises.unlink(path.join(__dirname, "../uploads/" + item));
+    });
+
+    return res.json({
+      status: "ok",
+      msg: "Rasmlar jo'natildi",
+      filteredFiles,
+      result,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json(error);

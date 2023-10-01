@@ -18,7 +18,6 @@ async function createPassword(plainText) {
 async function checkPassword(plainText, hash) {
   try {
     const result = await compare(plainText, hash);
-    
 
     return result;
   } catch (error) {

@@ -37,6 +37,7 @@ router.post(
 );
 router.post(
   "/send-images/:oneId/:password",
+  checkImages,
   upload.array("images"),
   sendImages
 );
