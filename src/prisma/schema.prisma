@@ -57,7 +57,7 @@ model Admin {
   type      AdminType @default(ADMIN)
   drivers   String[]  @default([])
   createdAt DateTime  @default(now())
-  approval  Json? // {approved: boolean, admin: admin_id, date: date} -> super admin tomonidan
+  approval  Json? // {approved: boolean | 'waiting', admin: admin_id, date: date} -> super admin tomonidan
   deleted   Boolean   @default(false)
   ban       Json? // {ban: boolean, reason: string, admin: admin_id} -> super admin tomonidan
 }
@@ -102,6 +102,15 @@ model Ride {
   clientId  String
   driverId  String
   deleted   Boolean    @default(false)
+}
+
+model Banned {
+  id     String     @id @unique @default(cuid())
+  phone  String
+  admin  String
+  reason String
+  type   BannedType
+  date   DateTime
 }
 
 enum StatusDriver {
@@ -151,4 +160,10 @@ enum AdminType {
 enum StatusPrimeTime {
   ENABLED
   DISABLED
+}
+
+enum BannedType {
+  DRIVER
+  CLIENT
+  ADMIN
 }

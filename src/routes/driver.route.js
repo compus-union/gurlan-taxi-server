@@ -5,7 +5,6 @@ const router = express.Router();
 const {
   register,
   login,
-  validate,
   sendImages,
   checkIfExists,
   checkIfValidated,
@@ -18,23 +17,9 @@ const {
   checkRegistered: driverRegistered,
   checkBan: driverBan,
 } = require("../middleware/driver.middleware");
-const {
-  checkAdmin,
-  checkAvailability,
-  checkBan,
-  checkRegistered,
-} = require("../middleware/admin.middleware");
 
 router.post("/register", checkRegister, register);
 router.post("/login", checkLogin, login);
-router.post(
-  "/validate",
-  checkAvailability,
-  checkRegistered,
-  checkBan,
-  checkAdmin,
-  validate
-);
 router.post(
   "/send-images/:oneId/:password",
   checkImages,
