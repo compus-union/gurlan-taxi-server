@@ -7,7 +7,7 @@ async function checkAvailability(req, res, next) {
   try {
     const { adminId } = req.body;
 
-    const admin = await prisma.admin.findUnique({
+    const admin = await prisma.admin.count({
       where: { oneId: adminId },
     });
 
@@ -27,14 +27,23 @@ async function checkAvailability(req, res, next) {
 
 async function checkRegistered(req, res, next) {
   try {
-    const token = req.headers["authorization"].split(" ")[1];
+    const headers = req.headers["authorization"];
 
-    if (!token) {
+    if (!headers) {
+      return res.json({
+        status: "forbidden",
+        msg: "Sizda tizimdan foydalanishga ruxsat yo'q. (Headers are not found)",
+      });
+    }
+
+    if (!headers.split(" ")[1]) {
       return res.json({
         status: "forbidden",
         msg: "Sizda tizimdan foydalanishga ruxsat yo'q. (Token is not found)",
       });
     }
+
+    const token = headers.split(" ")[1];
 
     const verifiedToken = await verifyToken(token, ADMIN_TOKEN);
 
@@ -153,7 +162,7 @@ async function checkValidationDriver(req, res, next) {
       });
     }
 
-    const driver = await prisma.driver.findUnique({
+    const driver = await prisma.driver.count({
       where: { oneId: driverId },
     });
 

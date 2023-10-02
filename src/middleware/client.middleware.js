@@ -7,7 +7,7 @@ async function checkAvailability(req, res, next) {
   try {
     const { oneId } = req.params;
 
-    const client = await prisma.client.findUnique({
+    const client = await prisma.client.count({
       where: { oneId },
     });
 
@@ -27,14 +27,23 @@ async function checkAvailability(req, res, next) {
 
 async function checkRegistered(req, res, next) {
   try {
-    const token = req.headers["authorization"].split(" ")[1];
+    const headers = req.headers["authorization"];
 
-    if (!token) {
+    if (!headers) {
+      return res.json({
+        status: "forbidden",
+        msg: "Sizda tizimdan foydalanishga ruxsat yo'q. (Headers are not found)",
+      });
+    }
+
+    if (!headers.split(" ")[1]) {
       return res.json({
         status: "forbidden",
         msg: "Sizda tizimdan foydalanishga ruxsat yo'q. (Token is not found)",
       });
     }
+
+    const token = headers.split(" ")[1];
 
     const verifiedToken = await verifyToken(token, CLIENT_TOKEN);
 
@@ -59,7 +68,7 @@ async function checkBan(req, res, next) {
       where: { oneId },
     });
 
-    if (client.ban && client.ban.banned) {
+    if (client.ban.banned) {
       return res.json({
         status: "forbidden",
         msg: "Sizning akkauntingiz tizimda bloklangan.",

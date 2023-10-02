@@ -76,6 +76,17 @@ async function checkRegister(req, res, next) {
       });
     }
 
+    const phoneExists = await prisma.driver.count({
+      where: { phone: { has: phone[0] } },
+    });
+
+    if (phoneExists) {
+      return res.json({
+        status: "bad",
+        msg: "Bu telefon raqam orqali tizimda oldin ro'yxatdan o'tilgan. Boshqasini tanlang",
+      });
+    }
+
     if (!password) {
       return res.json({
         status: "bad",
@@ -167,7 +178,7 @@ async function checkAvailability(req, res, next) {
   try {
     const { oneId } = req.params;
 
-    const driver = await prisma.driver.findUnique({
+    const driver = await prisma.driver.count({
       where: { oneId },
     });
 
@@ -187,14 +198,23 @@ async function checkAvailability(req, res, next) {
 
 async function checkRegistered(req, res, next) {
   try {
-    const token = req.headers["authorization"].split(" ")[1];
+    const headers = req.headers["authorization"];
 
-    if (!token) {
+    if (!headers) {
+      return res.json({
+        status: "forbidden",
+        msg: "Sizda tizimdan foydalanishga ruxsat yo'q. (Headers are not found)",
+      });
+    }
+
+    if (!headers.split(" ")[1]) {
       return res.json({
         status: "forbidden",
         msg: "Sizda tizimdan foydalanishga ruxsat yo'q. (Token is not found)",
       });
     }
+
+    const token = headers.split(" ")[1];
 
     const verifiedToken = await verifyToken(token, DRIVER_TOKEN);
 
@@ -265,7 +285,7 @@ async function checkImages(req, res, next) {
       return res.json({ status: "bad", msg: "Password kiritilishi lozim." });
     }
 
-    const driver = await prisma.driver.findUnique({
+    const driver = await prisma.driver.count({
       where: { oneId },
     });
 
