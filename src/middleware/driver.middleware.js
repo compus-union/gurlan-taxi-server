@@ -78,24 +78,19 @@ async function checkRegister(req, res, next) {
     }
 
     const phoneExists = await prisma.driver.count({
-      where: { phone: { has: phone[0] }, ban: { banned: false } },
+      where: { phone: { has: phone[0] } },
     });
-
-    if (phoneExists) {
-      return res.json({
-        status: driverResponseStatus.AUTH.AUTH_WARNING,
-        msg: "Bu telefon raqam orqali tizimda oldin ro'yxatdan o'tilgan. Boshqasini tanlang",
-      });
-    }
 
     const bannedPhone = await prisma.banned.count({
       where: { phone: phone[0] },
     });
 
-    if (bannedPhone) {
+    console.log(bannedPhone, phoneExists);
+
+    if (phoneExists || bannedPhone) {
       return res.json({
         status: driverResponseStatus.AUTH.AUTH_WARNING,
-        msg: "Bu telefon raqam tizimda bloklangan.",
+        msg: "Bu telefon raqam orqali tizimdan ro'yxatdan o'tish mumkin emas.",
       });
     }
 
@@ -261,6 +256,7 @@ async function checkBan(req, res, next) {
 
     const driver = await prisma.driver.findUnique({
       where: { oneId },
+      include: {ban: true}
     });
 
     if (driver.ban.banned) {
@@ -315,7 +311,7 @@ async function checkImages(req, res, next) {
       });
     }
 
-    const driver = await prisma.driver.count({
+    const driver = await prisma.driver.findUnique({
       where: { oneId },
     });
 

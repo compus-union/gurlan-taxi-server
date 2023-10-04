@@ -28,14 +28,22 @@ async function register(req, res) {
         fullname,
         password: hashedPass,
         phone,
-        ban: { banned: false, admin: "", reason: "" },
-        approval: { approved: 'waiting', admin: "", date: "" },
         car: {
           create: {
             oneId: newCarId,
             name,
             color,
             number,
+          },
+        },
+        ban: {
+          create: {
+            admin: "",
+            phone: "",
+            date: new Date(),
+            reason: "",
+            type: "DRIVER",
+            banned: false,
           },
         },
       },
@@ -53,6 +61,7 @@ async function register(req, res) {
       msg: "Ro'yxatdan o'tish bajarildi.",
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json(error);
   }
 }
@@ -65,7 +74,11 @@ async function login(req, res) {
 
     const token = await createToken({ ...driver }, DRIVER_TOKEN);
 
-    return res.json({ status: driverResponseStatus.AUTH.LOGIN_DONE, driver, token });
+    return res.json({
+      status: driverResponseStatus.AUTH.LOGIN_DONE,
+      driver,
+      token,
+    });
   } catch (error) {
     return res.status(500).json(error);
   }
@@ -98,7 +111,10 @@ async function sendImages(req, res) {
     });
 
     if (!result) {
-      return res.json({ status: driverResponseStatus.AUTH.IMAGES_SENT_FAILED, msg: "Rasmlar yuborilmadi." });
+      return res.json({
+        status: driverResponseStatus.AUTH.IMAGES_SENT_FAILED,
+        msg: "Rasmlar yuborilmadi.",
+      });
     }
 
     filteredFiles.forEach(async (item) => {
@@ -141,14 +157,18 @@ async function checkIfExists(req, res) {
 async function checkIfValidated(req, res) {
   try {
     const { oneId } = req.params;
-
+    
     const driver = await prisma.driver.findUnique({ where: { oneId } });
+    const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
 
-    if (!driver.approval || !driver.approval.approved === 'waiting') {
-      return res.json({ status: driverResponseStatus.AUTH.VALIDATION_WAITING, msg: "Hali kutasiz :)" });
+    if (!driver.approval || !driver.approval.approved === "waiting") {
+      return res.json({
+        status: driverResponseStatus.AUTH.VALIDATION_WAITING,
+        msg: "Hali kutasiz :)",
+        token: newToken
+      });
     }
 
-    const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
     const car = await prisma.car.findUnique({ where: { driverId: driver.id } });
 
     return res.json({
@@ -159,6 +179,7 @@ async function checkIfValidated(req, res) {
       status: driverResponseStatus.AUTH.VALIDATION_DONE,
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json(error);
   }
 }
