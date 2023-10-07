@@ -41,7 +41,6 @@ model Driver {
   status       StatusDriver?
   type         DriverTypes            @default(NOTMEASURED)
   ban          Banned?                @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id}
-  approval     Json? // {approved: boolean, admin: admin_id, date: date}
   createdAt    DateTime               @default(now())
   lastOnline   DateTime?
   account      String                 @default("0")
@@ -49,7 +48,7 @@ model Driver {
   rating       Int[]                  @default([])
   car          Car?
   bannedId     String?
-  Approval     Approval?              @relation(fields: [approvalId], references: [id])
+  approval     Approval?              @relation(fields: [approvalId], references: [id])
   approvalId   String?
 }
 
@@ -118,7 +117,7 @@ model Banned {
   admin  String
   reason String
   type   BannedType
-  date   DateTime?   @default(now())
+  date   DateTime?  @default(now())
   banned Boolean    @default(false)
   Driver Driver[]
   Client Client[]
@@ -126,13 +125,13 @@ model Banned {
 }
 
 model Approval {
-  id       String        @id @unique @default(cuid())
+  id       String              @id @unique @default(cuid())
   phone    String
   admin    String
   reason   String
-  aprroved ApprovalTypes
-  date     DateTime
-  approved Boolean       @default(false)
+  type     ApprovalPeopleTypes
+  date     DateTime?           @default(now())
+  approved ApprovalTypes
   Driver   Driver[]
   Client   Client[]
   Admin    Admin[]
@@ -197,4 +196,9 @@ enum BannedType {
   DRIVER
   CLIENT
   ADMIN
+}
+
+enum ApprovalPeopleTypes {
+  ADMIN
+  DRIVER
 }

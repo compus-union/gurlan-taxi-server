@@ -7,6 +7,8 @@ const { driverResponseStatus } = require("../constants");
 
 async function checkRegister(req, res, next) {
   try {
+    // Add oneId length checker
+
     if (!req.body.driver) {
       return res.json({
         status: driverResponseStatus.AUTH.AUTH_WARNING,
@@ -87,10 +89,19 @@ async function checkRegister(req, res, next) {
 
     console.log(bannedPhone, phoneExists);
 
-    if (phoneExists || bannedPhone) {
+    if (phoneExists) {
       return res.json({
         status: driverResponseStatus.AUTH.AUTH_WARNING,
         msg: "Bu telefon raqam orqali tizimdan ro'yxatdan o'tish mumkin emas.",
+        reason: "UNAVAILABLE",
+      });
+    }
+
+    if (bannedPhone) {
+      return res.json({
+        status: driverResponseStatus.AUTH.AUTH_WARNING,
+        msg: "Bu telefon raqam orqali tizimdan ro'yxatdan o'tish mumkin emas.",
+        reason: "BANNED",
       });
     }
 
@@ -168,7 +179,9 @@ async function checkRegister(req, res, next) {
 
 async function checkLogin(req, res, next) {
   try {
-    const { oneId } = req.body;
+    const { oneId, password } = req.body;
+
+    // Add oneId length checker
 
     if (!oneId) {
       return res.json({
@@ -177,7 +190,10 @@ async function checkLogin(req, res, next) {
       });
     }
 
-    const driver = await prisma.driver.count({ where: { oneId } });
+    const driver = await prisma.driver.findUnique({
+      where: { oneId },
+      include: { approval: true, ban: true },
+    });
 
     if (!driver) {
       return res.json({
@@ -187,6 +203,31 @@ async function checkLogin(req, res, next) {
       });
     }
 
+    const passwordMatch = await checkPassword(password, driver.password);
+
+    if (!passwordMatch) {
+      return res.json({
+        status: driverResponseStatus.AUTH.AUTH_WARNING,
+        msg: "Noto'g'ri parol",
+      });
+    }
+
+    if (driver.ban.banned) {
+      return res.json({
+        status: driverResponseStatus.AUTH.DRIVER_BANNED,
+        msg: "Haydovchi ma'lumotlari tizimda bloklangan",
+        reason: driver.ban.reason,
+      });
+    }
+
+    if (driver.approval.approved !== "true") {
+      return res.json({
+        status: driverResponseStatus.AUTH.VALIDATION_FAILED,
+        msg: "Haydovchi akkaunti hali tasdiqlanmagan yoki tasdiq bekor qilindi",
+        reason: driver.approval.reason || "Sabab mavjud emas",
+      });
+    }
+    
     return next();
   } catch (error) {
     return res.json(error);
@@ -256,7 +297,7 @@ async function checkBan(req, res, next) {
 
     const driver = await prisma.driver.findUnique({
       where: { oneId },
-      include: {ban: true}
+      include: { ban: true },
     });
 
     if (driver.ban.banned) {

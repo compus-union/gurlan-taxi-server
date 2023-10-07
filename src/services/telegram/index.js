@@ -22,7 +22,7 @@ const sendPictures = async (urls, details) => {
       {
         parse_mode: "HTML",
         caption: `
-        <b>#haydovchi</b>
+        <b>#haydovchi_kutyabdi</b>
         <b>🆔${details.oneId}</b>
         <b>🪪${details.fullname}</b>
         <b>📞${details.phone}</b>

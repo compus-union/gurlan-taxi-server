@@ -46,6 +46,16 @@ async function register(req, res) {
             banned: false,
           },
         },
+        approval: {
+          create: {
+            admin: "",
+            phone: "",
+            date: new Date(),
+            reason: "",
+            approved: "waiting",
+            type: "DRIVER",
+          },
+        },
       },
     });
 
@@ -157,7 +167,7 @@ async function checkIfExists(req, res) {
 async function checkIfValidated(req, res) {
   try {
     const { oneId } = req.params;
-    
+
     const driver = await prisma.driver.findUnique({ where: { oneId } });
     const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
 
@@ -165,7 +175,7 @@ async function checkIfValidated(req, res) {
       return res.json({
         status: driverResponseStatus.AUTH.VALIDATION_WAITING,
         msg: "Hali kutasiz :)",
-        token: newToken
+        token: newToken,
       });
     }
 

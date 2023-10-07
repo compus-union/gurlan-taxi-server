@@ -18,13 +18,13 @@ app.use(compression());
 app.use(cors({ origin: "*" }));
 app.use("@", express.static(__dirname));
 
-initMongoDB(dbConfig.MONGO_URL)
-  .then((info) => {
-    console.log(info.message);
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+// initMongoDB(dbConfig.MONGO_URL)
+//   .then((info) => {
+//     console.log(info.message);
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
 
 io.on("connection", (socket) => {
   console.log("Socket connection set ", Date.now().toLocaleString());
