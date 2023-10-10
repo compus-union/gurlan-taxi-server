@@ -169,15 +169,26 @@ async function checkIfValidated(req, res) {
   try {
     const { oneId } = req.params;
 
-    const driver = await prisma.driver.findUnique({ where: { oneId }, include: {approval: true} });
+    const driver = await prisma.driver.findUnique({
+      where: { oneId },
+      include: { approval: true },
+    });
     const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
-    
-    if (!driver.approval || !driver.approval.approved === "waiting") {
+
+    if (driver.status === "LIMITED" && driver.approval.approved === "waiting") {
       return res.json({
         status: driverResponseStatus.AUTH.VALIDATION_WAITING,
         msg: "Hali kutasiz :)",
         token: newToken,
-        driver
+        driver,
+      });
+    }
+
+    if (driver.status === "IGNORED" && driver.approval.approved === "false") {
+      return res.json({
+        status: driverResponseStatus.AUTH.VALIDATION_FAILED,
+        msg: "Ma'lumotlaringiz tasdiqlanmadi",
+        reason: driver.approval.reason,
       });
     }
 

@@ -152,6 +152,7 @@ enum StatusDriver {
   LIMITED // Registered, all the information is being checked by admins
   OFFLINE // Not using the app
   APPROVED // approved by admins
+  IGNORED // !approved by admins
 }
 
 enum StatusClient {
