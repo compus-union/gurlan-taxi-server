@@ -227,7 +227,7 @@ async function checkLogin(req, res, next) {
         reason: driver.approval.reason || "Sabab mavjud emas",
       });
     }
-    
+
     return next();
   } catch (error) {
     return res.json(error);
@@ -314,6 +314,29 @@ async function checkBan(req, res, next) {
   }
 }
 
+async function checkApproved(req, res, next) {
+  try {
+    const { oneId } = req.params;
+
+    const driver = await prisma.driver.findUnique({
+      where: { oneId },
+      include: { approval: true },
+    });
+
+    if (driver.approval.approved !== "true" && driver.status === "LIMITED") {
+      return res.json({
+        status: driverResponseStatus.AUTH.DRIVER_NOT_VALIDATED,
+        msg: "Sizning ma'lumotlaringiz tasdiqlanmagan",
+      });
+    }
+
+    return next()
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
 async function checkSelfAccess(req, res, next) {
   try {
     const { oneId } = req.params;
@@ -386,4 +409,5 @@ module.exports = {
   checkSelfAccess,
   checkLogin,
   checkImages,
+  checkApproved
 };

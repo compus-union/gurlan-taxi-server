@@ -28,6 +28,7 @@ async function register(req, res) {
         fullname,
         password: hashedPass,
         phone,
+        status: "LIMITED",
         car: {
           create: {
             oneId: newCarId,
@@ -39,7 +40,7 @@ async function register(req, res) {
         ban: {
           create: {
             admin: "",
-            phone: "",
+            phone: phone[0],
             date: new Date(),
             reason: "",
             type: "DRIVER",
@@ -49,7 +50,7 @@ async function register(req, res) {
         approval: {
           create: {
             admin: "",
-            phone: "",
+            phone: phone[0],
             date: new Date(),
             reason: "",
             approved: "waiting",
@@ -168,14 +169,15 @@ async function checkIfValidated(req, res) {
   try {
     const { oneId } = req.params;
 
-    const driver = await prisma.driver.findUnique({ where: { oneId } });
+    const driver = await prisma.driver.findUnique({ where: { oneId }, include: {approval: true} });
     const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
-
+    
     if (!driver.approval || !driver.approval.approved === "waiting") {
       return res.json({
         status: driverResponseStatus.AUTH.VALIDATION_WAITING,
         msg: "Hali kutasiz :)",
         token: newToken,
+        driver
       });
     }
 
