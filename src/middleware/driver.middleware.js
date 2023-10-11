@@ -181,12 +181,24 @@ async function checkLogin(req, res, next) {
   try {
     const { oneId, password } = req.body;
 
-    // Add oneId length checker
-
     if (!oneId) {
       return res.json({
         status: driverResponseStatus.AUTH.AUTH_WARNING,
         msg: "oneId kiritilishi kerak",
+      });
+    }
+
+    if (oneId.length < 9) {
+      return res.json({
+        status: driverResponseStatus.AUTH.AUTH_WARNING,
+        msg: "oneId kamida 9 ta raqam va harflardan tashkil topadi: AA1234567",
+      });
+    }
+
+    if (!password) {
+      return res.json({
+        status: driverResponseStatus.AUTH.AUTH_WARNING,
+        msg: "Parol kiritilishi kerak",
       });
     }
 
@@ -203,15 +215,6 @@ async function checkLogin(req, res, next) {
       });
     }
 
-    const passwordMatch = await checkPassword(password, driver.password);
-
-    if (!passwordMatch) {
-      return res.json({
-        status: driverResponseStatus.AUTH.AUTH_WARNING,
-        msg: "Noto'g'ri parol",
-      });
-    }
-
     if (driver.ban.banned) {
       return res.json({
         status: driverResponseStatus.AUTH.DRIVER_BANNED,
@@ -220,11 +223,12 @@ async function checkLogin(req, res, next) {
       });
     }
 
-    if (driver.approval.approved !== "true") {
+    const passwordMatch = await checkPassword(password, driver.password);
+
+    if (!passwordMatch) {
       return res.json({
-        status: driverResponseStatus.AUTH.VALIDATION_FAILED,
-        msg: "Haydovchi akkaunti hali tasdiqlanmagan yoki tasdiq bekor qilindi",
-        reason: driver.approval.reason || "Sabab mavjud emas",
+        status: driverResponseStatus.AUTH.AUTH_WARNING,
+        msg: "Noto'g'ri parol",
       });
     }
 
@@ -316,21 +320,29 @@ async function checkBan(req, res, next) {
 
 async function checkApproved(req, res, next) {
   try {
-    const { oneId } = req.params;
+    const { oneId } = req.params || req.body;
 
     const driver = await prisma.driver.findUnique({
       where: { oneId },
       include: { approval: true },
     });
 
-    if (driver.approval.approved !== "true" && driver.status === "LIMITED") {
+    if (driver.approval.approved === "waiting" && driver.status === "LIMITED") {
       return res.json({
-        status: driverResponseStatus.AUTH.DRIVER_NOT_VALIDATED,
-        msg: "Sizning ma'lumotlaringiz tasdiqlanmagan",
+        status: driverResponseStatus.AUTH.VALIDATION_WAITING,
+        msg: "Sizning ma'lumotlaringiz hali tasdiqlanmagan",
       });
     }
 
-    return next()
+    if (driver.approval.approved === "false" && driver.status === "IGNORED") {
+      return res.json({
+        status: driverResponseStatus.AUTH.VALIDATION_FAILED,
+        msg: "Sizning ma'lumotlaringiz tasdiqlanmagan",
+        reason: driver.approval.reason,
+      });
+    }
+
+    return next();
   } catch (error) {
     console.log(error);
     return res.status(500).json(error);
@@ -409,5 +421,5 @@ module.exports = {
   checkSelfAccess,
   checkLogin,
   checkImages,
-  checkApproved
+  checkApproved,
 };

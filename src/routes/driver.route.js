@@ -16,10 +16,11 @@ const {
   checkAvailability: driverAvailability,
   checkRegistered: driverRegistered,
   checkBan: driverBan,
+  checkApproved
 } = require("../middleware/driver.middleware");
 
 router.post("/register", checkRegister, register);
-router.post("/login", checkLogin, login);
+router.post("/login", checkLogin, checkApproved, login);
 router.post(
   "/send-images/:oneId/:password",
   checkImages,
