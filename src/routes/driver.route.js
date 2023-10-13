@@ -8,6 +8,8 @@ const {
   sendImages,
   checkIfExists,
   checkIfValidated,
+  deleteSelf,
+  checkIfLoggedIn,
 } = require("../controllers/driver.controller");
 const {
   checkRegister,
@@ -16,11 +18,10 @@ const {
   checkAvailability: driverAvailability,
   checkRegistered: driverRegistered,
   checkBan: driverBan,
-  checkApproved
 } = require("../middleware/driver.middleware");
 
 router.post("/register", checkRegister, register);
-router.post("/login", checkLogin, checkApproved, login);
+router.post("/login", driverRegistered, checkLogin, login);
 router.post(
   "/send-images/:oneId/:password",
   checkImages,
@@ -41,5 +42,14 @@ router.get(
   driverBan,
   checkIfValidated
 );
+router.get(
+  "/check-logged-in/:oneId",
+  driverAvailability,
+  driverRegistered,
+  driverBan,
+  checkIfLoggedIn
+);
+
+router.delete("/delete-self/:oneId", deleteSelf);
 
 module.exports = router;

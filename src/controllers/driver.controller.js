@@ -83,12 +83,25 @@ async function login(req, res) {
 
     const driver = await prisma.driver.findUnique({ where: { oneId } });
 
-    const token = await createToken({ ...driver }, DRIVER_TOKEN);
+    if (!driver) {
+      return res.json({
+        status: driverResponseStatus.AUTH.DRIVER_NOT_FOUND,
+        msg: "Bu oneId bo'yicha haydovchi topilmadi",
+      });
+    }
+
+    const updateDriver = await prisma.driver.update({
+      where: { oneId },
+      data: { loggedIn: true },
+    });
+
+    const token = await createToken({ ...updateDriver }, DRIVER_TOKEN);
 
     return res.json({
       status: driverResponseStatus.AUTH.LOGIN_DONE,
       driver,
       token,
+      msg: "Tizimga muvafaqqiyatli kirildi.",
     });
   } catch (error) {
     return res.status(500).json(error);
@@ -206,10 +219,61 @@ async function checkIfValidated(req, res) {
     return res.status(500).json(error);
   }
 }
+
+async function checkIfLoggedIn(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const driver = await prisma.driver.findUnique({
+      where: { oneId },
+      include: { approval: true },
+    });
+
+    if (!driver.loggedIn && !driver.approval.approved) {
+      return res.json({
+        status: driverResponseStatus.AUTH.LOGIN_FAILED,
+        msg: "Haydovchi tizimga kirmagan",
+      });
+    }
+
+    const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
+
+    return res.json({
+      status: driverResponseStatus.AUTH.LOGIN_DONE,
+      msg: "Tizimga kirilgan",
+      token: newToken,
+      driver,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+async function deleteSelf(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    await prisma.driver.delete({
+      where: { oneId },
+      include: { approval: true, ban: true },
+    });
+
+    return res.json({
+      status: driverResponseStatus.AUTH.SELF_DELETION_DONE,
+      msg: "Sizni ma'lumotlaringiz o'chirildi.",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
 module.exports = {
   register,
   login,
   sendImages,
   checkIfExists,
   checkIfValidated,
+  deleteSelf,
+  checkIfLoggedIn
 };

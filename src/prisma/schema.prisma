@@ -44,6 +44,7 @@ model Driver {
   createdAt    DateTime               @default(now())
   lastOnline   DateTime?
   account      String                 @default("0")
+  loggedIn     Boolean                @default(false)
   deleted      Boolean                @default(false)
   rating       Int[]                  @default([])
   car          Car?

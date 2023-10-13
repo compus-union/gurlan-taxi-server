@@ -223,6 +223,29 @@ async function checkLogin(req, res, next) {
       });
     }
 
+    if (
+      driver.approval.approved === "waiting" &&
+      driver.license !== "VALID" &&
+      driver.registration !== "VALID"
+    ) {
+      return res.json({
+        status: driverResponseStatus.AUTH.VALIDATION_WAITING,
+        msg: "Haydovchi ma'lumotlari hali tasdiqlanmagan, kuting.",
+      });
+    }
+
+    if (
+      driver.approval.approved === "false" &&
+      driver.license !== "VALID" &&
+      driver.registration !== "VALID"
+    ) {
+      return res.json({
+        status: driverResponseStatus.AUTH.VALIDATION_FAILED,
+        msg: "Haydovchi ma'lumotlari tasdiqlanmagan yoki bekor qilingan.",
+        reason: driver.approval.reason,
+      });
+    }
+
     const passwordMatch = await checkPassword(password, driver.password);
 
     if (!passwordMatch) {
@@ -318,37 +341,6 @@ async function checkBan(req, res, next) {
   }
 }
 
-async function checkApproved(req, res, next) {
-  try {
-    const { oneId } = req.params || req.body;
-
-    const driver = await prisma.driver.findUnique({
-      where: { oneId },
-      include: { approval: true },
-    });
-
-    if (driver.approval.approved === "waiting" && driver.status === "LIMITED") {
-      return res.json({
-        status: driverResponseStatus.AUTH.VALIDATION_WAITING,
-        msg: "Sizning ma'lumotlaringiz hali tasdiqlanmagan",
-      });
-    }
-
-    if (driver.approval.approved === "false" && driver.status === "IGNORED") {
-      return res.json({
-        status: driverResponseStatus.AUTH.VALIDATION_FAILED,
-        msg: "Sizning ma'lumotlaringiz tasdiqlanmagan",
-        reason: driver.approval.reason,
-      });
-    }
-
-    return next();
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(error);
-  }
-}
-
 async function checkSelfAccess(req, res, next) {
   try {
     const { oneId } = req.params;
@@ -421,5 +413,4 @@ module.exports = {
   checkSelfAccess,
   checkLogin,
   checkImages,
-  checkApproved,
 };
