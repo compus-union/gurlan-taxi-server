@@ -21,9 +21,12 @@ model Client {
   moneySpent String?
   rides      Ride[]
   status     StatusClient?
-  ban        Json? // {ban: boolean, reason: string, admin: admin_id}
+  ban        Banned?       @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id}
   lastLogin  DateTime      @default(now())
   deleted    Boolean       @default(false)
+  bannedId   String?
+  Approval   Approval?     @relation(fields: [approvalId], references: [id])
+  approvalId String?
 }
 
 model Driver {
@@ -37,29 +40,34 @@ model Driver {
   rides        Ride[]
   status       StatusDriver?
   type         DriverTypes            @default(NOTMEASURED)
-  ban          Json? // {ban: boolean, reason: string, admin: admin_id}
-  approval     Json? // {approved: boolean, admin: admin_id, date: date}
+  ban          Banned?                @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id}
   createdAt    DateTime               @default(now())
   lastOnline   DateTime?
   account      String                 @default("0")
+  loggedIn     Boolean                @default(false)
   deleted      Boolean                @default(false)
   rating       Int[]                  @default([])
   car          Car?
+  bannedId     String?
+  approval     Approval?              @relation(fields: [approvalId], references: [id])
+  approvalId   String?
 }
 
 model Admin {
-  id        String    @id @unique @default(cuid())
-  oneId     String    @unique
-  fullname  String
-  phone     String
-  email     String
-  password  String
-  type      AdminType @default(ADMIN)
-  drivers   String[]  @default([])
-  createdAt DateTime  @default(now())
-  approval  Json? // {approved: boolean, admin: admin_id, date: date} -> super admin tomonidan
-  deleted   Boolean   @default(false)
-  ban       Json? // {ban: boolean, reason: string, admin: admin_id} -> super admin tomonidan
+  id         String    @id @unique @default(cuid())
+  oneId      String    @unique
+  fullname   String
+  phone      String
+  email      String
+  password   String
+  type       AdminType @default(ADMIN)
+  drivers    String[]  @default([])
+  createdAt  DateTime  @default(now())
+  approval   Approval? @relation(fields: [approvalId], references: [id]) // {approved: boolean | 'waiting', admin: admin_id, date: date} -> super admin tomonidan
+  deleted    Boolean   @default(false)
+  ban        Banned?   @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id} -> super admin tomonidan
+  approvalId String?
+  bannedId   String?
 }
 
 model Car {
@@ -104,6 +112,38 @@ model Ride {
   deleted   Boolean    @default(false)
 }
 
+model Banned {
+  id     String     @id @unique @default(cuid())
+  phone  String
+  admin  String
+  reason String
+  type   BannedType
+  date   DateTime?  @default(now())
+  banned Boolean    @default(false)
+  Driver Driver[]
+  Client Client[]
+  Admin  Admin[]
+}
+
+model Approval {
+  id       String              @id @unique @default(cuid())
+  phone    String
+  admin    String
+  reason   String
+  type     ApprovalPeopleTypes
+  date     DateTime?           @default(now())
+  approved ApprovalTypes
+  Driver   Driver[]
+  Client   Client[]
+  Admin    Admin[]
+}
+
+enum ApprovalTypes {
+  true
+  false
+  waiting
+}
+
 enum StatusDriver {
   ONLINE // Ready for requests
   GOINGTOCLIENT // Has request, going to pick up the client
@@ -113,6 +153,7 @@ enum StatusDriver {
   LIMITED // Registered, all the information is being checked by admins
   OFFLINE // Not using the app
   APPROVED // approved by admins
+  IGNORED // !approved by admins
 }
 
 enum StatusClient {
@@ -151,4 +192,15 @@ enum AdminType {
 enum StatusPrimeTime {
   ENABLED
   DISABLED
+}
+
+enum BannedType {
+  DRIVER
+  CLIENT
+  ADMIN
+}
+
+enum ApprovalPeopleTypes {
+  ADMIN
+  DRIVER
 }

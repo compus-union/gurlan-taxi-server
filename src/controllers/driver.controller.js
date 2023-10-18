@@ -1,10 +1,14 @@
 require("dotenv").config();
 const { PrismaClient } = require("@prisma/client");
 const { DRIVER_TOKEN } = require("../configs/token.config");
-const { TELEGRAM_BOT_TOKEN } = require("../configs/other.config");
 const { createId } = require("../utils/idGenerator.util");
 const { createPassword } = require("../utils/password.util");
 const { createToken } = require("../utils/jwt.util");
+const { sendPictures } = require("../services/telegram");
+const { promises } = require("fs");
+const moment = require("moment");
+const path = require("path");
+const { driverResponseStatus } = require("../constants");
 
 const prisma = new PrismaClient();
 
@@ -24,12 +28,33 @@ async function register(req, res) {
         fullname,
         password: hashedPass,
         phone,
+        status: "LIMITED",
         car: {
           create: {
             oneId: newCarId,
             name,
             color,
             number,
+          },
+        },
+        ban: {
+          create: {
+            admin: "",
+            phone: phone[0],
+            date: new Date(),
+            reason: "",
+            type: "DRIVER",
+            banned: false,
+          },
+        },
+        approval: {
+          create: {
+            admin: "",
+            phone: phone[0],
+            date: new Date(),
+            reason: "",
+            approved: "waiting",
+            type: "DRIVER",
           },
         },
       },
@@ -39,8 +64,15 @@ async function register(req, res) {
 
     const token = await createToken({ ...newDriver }, DRIVER_TOKEN);
 
-    return res.json({ status: "ok", token, driver: newDriver, car: newCar });
+    return res.json({
+      status: driverResponseStatus.AUTH.REGISTRATION_DONE,
+      token,
+      driver: newDriver,
+      car: newCar,
+      msg: "Ro'yxatdan o'tish bajarildi.",
+    });
   } catch (error) {
+    console.log(error);
     return res.status(500).json(error);
   }
 }
@@ -51,52 +83,197 @@ async function login(req, res) {
 
     const driver = await prisma.driver.findUnique({ where: { oneId } });
 
-    const token = await createToken({ ...driver }, DRIVER_TOKEN);
-
-    return res.json({ status: "ok", driver, token });
-  } catch (error) {
-    return res.status(500).json(error);
-  }
-}
-
-async function validate(req, res) {
-  try {
-    const { driverId, adminId } = req.body;
+    if (!driver) {
+      return res.json({
+        status: driverResponseStatus.AUTH.DRIVER_NOT_FOUND,
+        msg: "Bu oneId bo'yicha haydovchi topilmadi",
+      });
+    }
 
     const updateDriver = await prisma.driver.update({
-      where: { oneId: driverId },
-      data: {
-        license: "VALID",
-        registration: "VALID",
-        status: "APPROVED",
-        approval: { approved: true, admin: adminId },
-      },
+      where: { oneId },
+      data: { loggedIn: true },
     });
 
-    return res.json({ status: "ok", driver: updateDriver });
+    const token = await createToken({ ...updateDriver }, DRIVER_TOKEN);
+
+    return res.json({
+      status: driverResponseStatus.AUTH.LOGIN_DONE,
+      driver,
+      token,
+      msg: "Tizimga muvafaqqiyatli kirildi.",
+    });
   } catch (error) {
     return res.status(500).json(error);
   }
 }
 
-async function invalidate(req, res, next) {
+async function sendImages(req, res) {
   try {
-    const { driverId, adminId } = req.body;
+    const { oneId, password } = req.params;
 
-    const updateDriver = await prisma.driver.update({
-      where: { oneId: driverId },
-      data: {
-        license: "INVALID",
-        registration: "INVALID",
-        status: "BANNED",
-        approval: { approved: false, admin: adminId },
-        deleted: true,
-      },
+    const driver = await prisma.driver.findUnique({
+      where: { oneId },
+      include: { car: true },
     });
 
-    return res.json({ status: "ok", driver: updateDriver });
+    const files = await promises.readdir("./src/uploads");
+
+    const filteredFiles = files.filter((item) => {
+      return item.includes("haydovchi");
+    });
+
+    const result = await sendPictures(filteredFiles, {
+      oneId,
+      fullname: driver.fullname,
+      phone: driver.phone,
+      password,
+      carName: driver.car.name,
+      carColor: driver.car.color,
+      carNumber: driver.car.number,
+      date: moment().format(),
+    });
+
+    if (!result) {
+      return res.json({
+        status: driverResponseStatus.AUTH.IMAGES_SENT_FAILED,
+        msg: "Rasmlar yuborilmadi.",
+      });
+    }
+
+    filteredFiles.forEach(async (item) => {
+      await promises.unlink(path.join(__dirname, "../uploads/" + item));
+    });
+
+    return res.json({
+      status: driverResponseStatus.AUTH.IMAGES_SENT,
+      msg: "Rasmlar jo'natildi",
+      filteredFiles,
+      result,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+async function checkIfExists(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const driver = await prisma.driver.findUnique({ where: { oneId } });
+    const car = await prisma.car.findUnique({ where: { driverId: driver.id } });
+
+    const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
+
+    return res.json({
+      status: driverResponseStatus.AUTH.DRIVER_EXISTS,
+      msg: "Akkaunt topildi",
+      token: newToken,
+      driver,
+      car,
+    });
   } catch (error) {
     return res.status(500).json(error);
   }
 }
-module.exports = { register, login, validate };
+
+async function checkIfValidated(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const driver = await prisma.driver.findUnique({
+      where: { oneId },
+      include: { approval: true },
+    });
+    const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
+
+    if (driver.status === "LIMITED" && driver.approval.approved === "waiting") {
+      return res.json({
+        status: driverResponseStatus.AUTH.VALIDATION_WAITING,
+        msg: "Hali kutasiz :)",
+        token: newToken,
+        driver,
+      });
+    }
+
+    if (driver.status === "IGNORED" && driver.approval.approved === "false") {
+      return res.json({
+        status: driverResponseStatus.AUTH.VALIDATION_FAILED,
+        msg: "Ma'lumotlaringiz tasdiqlanmadi",
+        reason: driver.approval.reason,
+      });
+    }
+
+    const car = await prisma.car.findUnique({ where: { driverId: driver.id } });
+
+    return res.json({
+      car,
+      driver,
+      token: newToken,
+      msg: "Sizning ma'lumotlaringiz tasdiqlandi",
+      status: driverResponseStatus.AUTH.VALIDATION_DONE,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+async function checkIfLoggedIn(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const driver = await prisma.driver.findUnique({
+      where: { oneId },
+      include: { approval: true },
+    });
+
+    if (!driver.loggedIn && !driver.approval.approved) {
+      return res.json({
+        status: driverResponseStatus.AUTH.LOGIN_FAILED,
+        msg: "Haydovchi tizimga kirmagan",
+      });
+    }
+
+    const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
+
+    return res.json({
+      status: driverResponseStatus.AUTH.LOGIN_DONE,
+      msg: "Tizimga kirilgan",
+      token: newToken,
+      driver,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+async function deleteSelf(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    await prisma.driver.delete({
+      where: { oneId },
+      include: { approval: true, ban: true },
+    });
+
+    return res.json({
+      status: driverResponseStatus.AUTH.SELF_DELETION_DONE,
+      msg: "Sizni ma'lumotlaringiz o'chirildi.",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+module.exports = {
+  register,
+  login,
+  sendImages,
+  checkIfExists,
+  checkIfValidated,
+  deleteSelf,
+  checkIfLoggedIn
+};
