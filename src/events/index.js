@@ -45,7 +45,7 @@ class MainEvent extends EventEmitter {
     fns.forEach((f) => {
       f(...args);
     });
-    return true;
+    return true; //
   }
 
   listenerCount(eventName) {
