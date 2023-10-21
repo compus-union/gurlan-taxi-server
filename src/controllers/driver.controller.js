@@ -8,7 +8,7 @@ const { sendPictures } = require("../services/telegram");
 const { promises } = require("fs");
 const moment = require("moment");
 const path = require("path");
-const { driverResponseStatus } = require("../constants");
+const { responseStatus } = require("../constants");
 
 const prisma = new PrismaClient();
 
@@ -65,7 +65,7 @@ async function register(req, res) {
     const token = await createToken({ ...newDriver }, DRIVER_TOKEN);
 
     return res.json({
-      status: driverResponseStatus.AUTH.REGISTRATION_DONE,
+      status: responseStatus.AUTH.REGISTRATION_DONE,
       token,
       driver: newDriver,
       car: newCar,
@@ -85,7 +85,7 @@ async function login(req, res) {
 
     if (!driver) {
       return res.json({
-        status: driverResponseStatus.AUTH.DRIVER_NOT_FOUND,
+        status: responseStatus.AUTH.DRIVER_NOT_FOUND,
         msg: "Bu oneId bo'yicha haydovchi topilmadi",
       });
     }
@@ -98,7 +98,7 @@ async function login(req, res) {
     const token = await createToken({ ...updateDriver }, DRIVER_TOKEN);
 
     return res.json({
-      status: driverResponseStatus.AUTH.LOGIN_DONE,
+      status: responseStatus.AUTH.LOGIN_DONE,
       driver,
       token,
       msg: "Tizimga muvafaqqiyatli kirildi.",
@@ -136,7 +136,7 @@ async function sendImages(req, res) {
 
     if (!result) {
       return res.json({
-        status: driverResponseStatus.AUTH.IMAGES_SENT_FAILED,
+        status: responseStatus.AUTH.IMAGES_SENT_FAILED,
         msg: "Rasmlar yuborilmadi.",
       });
     }
@@ -146,7 +146,7 @@ async function sendImages(req, res) {
     });
 
     return res.json({
-      status: driverResponseStatus.AUTH.IMAGES_SENT,
+      status: responseStatus.AUTH.IMAGES_SENT,
       msg: "Rasmlar jo'natildi",
       filteredFiles,
       result,
@@ -167,7 +167,7 @@ async function checkIfExists(req, res) {
     const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
 
     return res.json({
-      status: driverResponseStatus.AUTH.DRIVER_EXISTS,
+      status: responseStatus.AUTH.DRIVER_EXISTS,
       msg: "Akkaunt topildi",
       token: newToken,
       driver,
@@ -190,7 +190,7 @@ async function checkIfValidated(req, res) {
 
     if (driver.status === "LIMITED" && driver.approval.approved === "waiting") {
       return res.json({
-        status: driverResponseStatus.AUTH.VALIDATION_WAITING,
+        status: responseStatus.AUTH.VALIDATION_WAITING,
         msg: "Hali kutasiz :)",
         token: newToken,
         driver,
@@ -199,7 +199,7 @@ async function checkIfValidated(req, res) {
 
     if (driver.status === "IGNORED" && driver.approval.approved === "false") {
       return res.json({
-        status: driverResponseStatus.AUTH.VALIDATION_FAILED,
+        status: responseStatus.AUTH.VALIDATION_FAILED,
         msg: "Ma'lumotlaringiz tasdiqlanmadi",
         reason: driver.approval.reason,
       });
@@ -212,7 +212,7 @@ async function checkIfValidated(req, res) {
       driver,
       token: newToken,
       msg: "Sizning ma'lumotlaringiz tasdiqlandi",
-      status: driverResponseStatus.AUTH.VALIDATION_DONE,
+      status: responseStatus.AUTH.VALIDATION_DONE,
     });
   } catch (error) {
     console.log(error);
@@ -231,7 +231,7 @@ async function checkIfLoggedIn(req, res) {
 
     if (!driver.loggedIn && !driver.approval.approved) {
       return res.json({
-        status: driverResponseStatus.AUTH.LOGIN_FAILED,
+        status: responseStatus.AUTH.LOGIN_FAILED,
         msg: "Haydovchi tizimga kirmagan",
       });
     }
@@ -239,7 +239,7 @@ async function checkIfLoggedIn(req, res) {
     const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
 
     return res.json({
-      status: driverResponseStatus.AUTH.LOGIN_DONE,
+      status: responseStatus.AUTH.LOGIN_DONE,
       msg: "Tizimga kirilgan",
       token: newToken,
       driver,
@@ -260,7 +260,7 @@ async function deleteSelf(req, res) {
     });
 
     return res.json({
-      status: driverResponseStatus.AUTH.SELF_DELETION_DONE,
+      status: responseStatus.AUTH.SELF_DELETION_DONE,
       msg: "Sizni ma'lumotlaringiz o'chirildi.",
     });
   } catch (error) {

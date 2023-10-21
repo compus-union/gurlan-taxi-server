@@ -61,7 +61,7 @@ app.get("/", (req, res) => {
   res.json({ msg: "Hello from the server" });
 });
 
-app.use("/api/v1/auth", require("./routes/auth.route"));
+app.use("/api/v1/client", require("./routes/client.route"));
 app.use("/api/v1/driver", require("./routes/driver.route"));
 app.use("/api/v1/geocoding", require("./routes/geocoding.route"));
 app.use("/api/v1/primeTime", require("./routes/primeTime.route"));
