@@ -1,10 +1,17 @@
 const { PrismaClient, StatusDriver } = require("@prisma/client");
 const prisma = new PrismaClient();
-const { containsUppercase, checkPassword } = require("../utils/password.util");
+const { checkPassword } = require("../utils/password.util");
 const { verifyToken } = require("../utils/jwt.util");
 const { DRIVER_TOKEN } = require("../configs/token.config");
 const { responseStatus } = require("../constants");
 
+/**
+ *
+ * @param {Request} req
+ * @param {Response} res
+ * @param {*} next
+ * @returns
+ */
 async function checkRegister(req, res, next) {
   try {
     // Add oneId length checker
@@ -50,8 +57,8 @@ async function checkRegister(req, res, next) {
       });
     }
 
-    const validationCyrilic = /^[a-zA-Z]+(\s[a-zA-Z]+)*$/;
-    if (!validationCyrilic.test(fullname)) {
+    const validationFullname = /^[a-zA-Z]+(\s[a-zA-Z]+)?$/g;
+    if (!validationFullname.test(fullname)) {
       return res.json({
         status: responseStatus.AUTH.AUTH_WARNING,
         msg: "Ism familiya lotin harflarida raqam va belgilarsiz kiritilishi lozim.",
@@ -79,12 +86,28 @@ async function checkRegister(req, res, next) {
       });
     }
 
+    let validationPass = /^[^\sа-яА-Я]*$/g;
+
+    if (password.length < 8) {
+      return res.json({
+        status: responseStatus.AUTH.AUTH_WARNING,
+        msg: "Parol kamida 8 ta belgidan iborat bo'lishi kerak.",
+      });
+    }
+
+    if (!validationPass.test(password)) {
+      return res.json({
+        status: responseStatus.AUTH.AUTH_WARNING,
+        msg: "Parol faqat lotin harflaridan tashkil topishi, ortiqcha bo'sh joylarsiz yozilishi kerak.",
+      });
+    }
+
     const phoneExists = await prisma.driver.count({
       where: { phone: { has: phone[0] } },
     });
 
     const bannedPhone = await prisma.banned.count({
-      where: { phone: phone[0] },
+      where: { phone: phone[0], banned: true, type: "DRIVER" },
     });
 
     console.log(bannedPhone, phoneExists);
@@ -105,6 +128,21 @@ async function checkRegister(req, res, next) {
       });
     }
 
+    const notBannedButInTheList = await prisma.banned.findFirst({
+      where: { phone: phone[0], banned: false, type: "DRIVER" },
+    });
+
+    if (notBannedButInTheList) {
+      await prisma.banned.delete({
+        where: { id: notBannedButInTheList.id },
+      });
+      const banned = await prisma.banned.findFirst({
+        where: { phone: phone[0], banned: false, type: "DRIVER" },
+      });
+      console.log(banned);
+      console.log("Banned record of the driver was deleted");
+    }
+
     if (!password) {
       return res.json({
         status: responseStatus.AUTH.AUTH_WARNING,
@@ -116,22 +154,6 @@ async function checkRegister(req, res, next) {
       return res.json({
         status: responseStatus.AUTH.AUTH_WARNING,
         msg: "Parol kamida 8 ta belgidan iborat bo'lishi kerak.",
-      });
-    }
-
-    const passwordUppercaseTest = await containsUppercase(password);
-
-    if (!passwordUppercaseTest) {
-      return res.json({
-        status: responseStatus.AUTH.AUTH_WARNING,
-        msg: "Parol kamida bitta katta harfdan iborat bo'lishi kerak.",
-      });
-    }
-
-    if (validationCyrilic.test(password)) {
-      return res.json({
-        status: responseStatus.AUTH.AUTH_WARNING,
-        msg: "Parol lotin harflarida kiritilishi lozim",
       });
     }
 
@@ -164,10 +186,10 @@ async function checkRegister(req, res, next) {
     });
 
     if (numberExists) {
-      return {
+      return res.json({
         status: responseStatus.AUTH.AUTH_WARNING,
         msg: "Bu raqamga ega avtomobil tizimda mavjud",
-      };
+      });
     }
 
     return next();

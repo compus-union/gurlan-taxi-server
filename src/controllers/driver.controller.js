@@ -65,7 +65,7 @@ async function register(req, res) {
     const token = await createToken({ ...newDriver }, DRIVER_TOKEN);
 
     return res.json({
-      status: responseStatus.AUTH.REGISTRATION_DONE,
+      status: responseStatus.AUTH.DRIVER_REGISTRATION_DONE,
       token,
       driver: newDriver,
       car: newCar,
@@ -98,7 +98,7 @@ async function login(req, res) {
     const token = await createToken({ ...updateDriver }, DRIVER_TOKEN);
 
     return res.json({
-      status: responseStatus.AUTH.LOGIN_DONE,
+      status: responseStatus.AUTH.DRIVER_LOGIN_DONE,
       driver,
       token,
       msg: "Tizimga muvafaqqiyatli kirildi.",
@@ -231,7 +231,7 @@ async function checkIfLoggedIn(req, res) {
 
     if (!driver.loggedIn && !driver.approval.approved) {
       return res.json({
-        status: responseStatus.AUTH.LOGIN_FAILED,
+        status: responseStatus.AUTH.DRIVER_LOGIN_FAILED,
         msg: "Haydovchi tizimga kirmagan",
       });
     }
@@ -239,7 +239,7 @@ async function checkIfLoggedIn(req, res) {
     const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
 
     return res.json({
-      status: responseStatus.AUTH.LOGIN_DONE,
+      status: responseStatus.AUTH.DRIVER_LOGIN_DONE,
       msg: "Tizimga kirilgan",
       token: newToken,
       driver,
@@ -268,12 +268,46 @@ async function deleteSelf(req, res) {
     return res.status(500).json(error);
   }
 }
+/**
+ *
+ * @param {Request} req
+ * @param {Response} res
+ */
+async function restart(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const driver = await prisma.driver.findUnique({ where: { oneId } });
+    
+    await prisma.car.delete({ where: { driverId: driver.id } });
+
+    const foundApproval = await prisma.approval.findFirst({where: { type: "DRIVER", phone: driver.phone[0] }})
+   
+    await prisma.approval.delete({
+      where: { id: foundApproval.id },
+    });
+
+    await prisma.driver.delete({
+      where: { oneId },
+      include: { approval: true, ban: false },
+    });
+
+    return res.json({
+      status: responseStatus.AUTH.DRIVER_RESTART_DONE,
+      msg: "Boshqatdan ro'yxatdan o'tishingiz mumkin",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
 module.exports = {
   register,
   login,
   sendImages,
   checkIfExists,
   checkIfValidated,
+  restart,
   deleteSelf,
-  checkIfLoggedIn
+  checkIfLoggedIn,
 };

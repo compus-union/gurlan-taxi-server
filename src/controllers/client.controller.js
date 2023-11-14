@@ -14,7 +14,14 @@ const prisma = new PrismaClient();
  */
 async function auth(req, res) {
   try {
-    console.log(req.body);
+    const bannedPhone = await prisma.banned.findFirst({
+      where: { phone: req.body.phone, type: "CLIENT" },
+    });
+
+    if (bannedPhone && bannedPhone.banned) {
+      return res.json({msg: "Bu telefon raqam tizimda bloklangan", status: responseStatus.AUTH.BANNED})
+    }
+
     const clientExist = await prisma.client.findFirst({
       where: { phone: req.body.client.phone },
       include: { ban: true },
@@ -25,17 +32,6 @@ async function auth(req, res) {
         status: responseStatus.AUTH.CLIENT_READY_TO_REGISTER,
         registered: false,
         msg: "Feel free to create an account",
-      });
-    }
-
-    const bannedPhone = await prisma.banned.findFirst({
-      where: { phone: req.body.client.phone, banned: true },
-    });
-
-    if (bannedPhone) {
-      return res.json({
-        status: responseStatus.AUTH.BANNED,
-        msg: "Bu raqam tizimda bloklangan.",
       });
     }
 
