@@ -10,6 +10,7 @@ const {
   checkIfValidated,
   deleteSelf,
   checkIfLoggedIn,
+  restart,
 } = require("../controllers/driver.controller");
 const {
   checkRegister,
@@ -49,6 +50,7 @@ router.get(
   driverBan,
   checkIfLoggedIn
 );
+router.delete("/restart/:oneId", driverAvailability, driverRegistered, restart);
 
 router.delete("/delete-self/:oneId", deleteSelf);
 
