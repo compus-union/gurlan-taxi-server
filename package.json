@@ -14,7 +14,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.3.1",
     "axios": "^1.4.0",
     "bcrypt": "^5.1.0",
     "compression": "^1.7.4",
@@ -27,13 +26,17 @@
     "mongoose": "^7.4.3",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.2",
+    "nodemailer": "^6.9.7",
     "nodemon": "^3.0.1",
     "socket.io": "^4.7.2",
     "telegraf": "^3.38.0"
   },
   "devDependencies": {
+    "@prisma/client": "^5.7.0",
     "@types/node": "^20.5.0",
-    "prisma": "^5.3.1",
+    "i": "^0.3.7",
+    "npm": "^10.2.5",
+    "prisma": "^5.7.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
   },

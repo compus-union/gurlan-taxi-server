@@ -11,22 +11,32 @@ datasource db {
 }
 
 model Client {
-  id         String        @id @unique @default(cuid())
-  oneId      String        @unique
-  createdAt  DateTime      @default(now())
-  fullname   String
-  phone      String        @unique
-  password   String
-  bonus      String?
-  moneySpent String?
-  rides      Ride[]
-  status     StatusClient?
-  ban        Banned?       @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id}
-  lastLogin  DateTime      @default(now())
-  deleted    Boolean       @default(false)
-  bannedId   String?
-  Approval   Approval?     @relation(fields: [approvalId], references: [id])
-  approvalId String?
+  id             String        @id @unique @default(cuid())
+  oneId          String        @unique
+  createdAt      DateTime      @default(now())
+  fullname       String
+  phone          String        @unique
+  password       String
+  email          String?       @unique
+  bonus          String?
+  moneySpent     String?
+  rides          Ride[]
+  status         StatusClient?
+  ban            Banned?       @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id}
+  lastLogin      DateTime      @default(now())
+  deleted        Boolean       @default(false)
+  bannedId       String?
+  Approval       Approval?     @relation(fields: [approvalId], references: [id])
+  confirmation   Confirmation  @relation(fields: [confirmationId], references: [id])
+  approvalId     String?
+  confirmationId String
+}
+
+model Confirmation {
+  id        String   @id @unique @default(cuid())
+  code      String
+  confirmed Boolean
+  Client    Client[]
 }
 
 model Driver {
@@ -163,6 +173,7 @@ enum StatusClient {
   OFFLINE // Not using the app
   ONLINE // In the app, not requested yet
   BANNED // Just fucked up
+  CONFIRMING // has confimation code, not typed yet
 }
 
 enum StatusRide {
