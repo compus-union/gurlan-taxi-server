@@ -6,9 +6,8 @@ const { responseStatus } = require("../constants/index");
 const { createId } = require("../utils/idGenerator.util");
 const moment = require("moment");
 const { generateConfirmationCode } = require("../utils/codeGenerator.util");
-const {
-  sendConfirmationCode,
-} = require("../services/emailing/confirmationCode.service");
+
+const { sendCode } = require("../services/sms/sendSms");
 
 const prisma = new PrismaClient();
 /**
@@ -18,9 +17,9 @@ const prisma = new PrismaClient();
  */
 async function auth(req, res) {
   try {
-    const bannedPhone = await prisma.banned.findFirst({
-      where: { phone: req.body.client.phone, type: "CLIENT" },
-    });
+    const { phone, password } = req.body.client;
+
+    const bannedPhone = await prisma.banned.findFirst({ where: { phone } });
 
     if (bannedPhone && bannedPhone.banned) {
       return res.json({
@@ -30,20 +29,68 @@ async function auth(req, res) {
     }
 
     const clientExist = await prisma.client.findFirst({
-      where: { phone: req.body.client.phone },
-      include: { ban: true },
+      where: { phone },
+      include: { ban: true, confirmation: true },
     });
 
     if (!clientExist) {
+      const newOneId = await createId("client");
+      const newConfirmationCode = await generateConfirmationCode(6);
+      const hashedPass = await createPassword(password);
+
+      const updatedClient = await prisma.client.create({
+        data: {
+          oneId: newOneId,
+          phone,
+          fullname: "Taxi Mijoz",
+          password: hashedPass,
+          createdAt: new Date(moment().format()),
+          lastLogin: new Date(moment().format()),
+          status: "CONFIRMING",
+          confirmation: {
+            create: { code: newConfirmationCode, confirmed: false },
+          },
+          ban: {
+            create: {
+              admin: "",
+              phone: phone,
+              date: new Date(),
+              reason: "",
+              type: "CLIENT",
+              banned: false,
+            },
+          },
+        },
+      });
+
+      // const sentInfo = await sendCode(phone, newConfirmationCode);
+
+      // if (sentInfo.status !== "ok") {
+      //   return res.json({
+      //     status: responseStatus.AUTH.AUTH_WARNING,
+      //     msg: "Tasdiqlash kodini yuborishda xatolik yuzaga keldi, boshqatdan urinib ko'ring",
+      //     // sentInfo,
+      //   });
+      // }
+
       return res.json({
-        status: responseStatus.AUTH.CLIENT_READY_TO_REGISTER,
-        registered: false,
-        msg: "Feel free to create an account",
+        status: responseStatus.AUTH.CONFIRMATION_CODE_SENT,
+        msg: "Tizimga kirish uchun telefon raqamingizga tasdiqlash kodi yuborildi",
+        sentInfo,
+        clientStatus: updatedClient.status,
+        oneId: updatedClient.oneId,
+      });
+    }
+
+    if (clientExist.ban.banned) {
+      return res.json({
+        msg: "Bu telefon raqam tizimda bloklangan",
+        status: responseStatus.AUTH.BANNED,
       });
     }
 
     const isPasswordCorrect = await checkPassword(
-      req.body.client.password,
+      password,
       clientExist.password
     );
 
@@ -54,103 +101,56 @@ async function auth(req, res) {
       });
     }
 
-    if (clientExist.ban.banned) {
+    if (
+      !clientExist.confirmation.confirmed &&
+      clientExist.status === "CONFIRMING"
+    ) {
+      const newConfirmationCode = await generateConfirmationCode(6);
+      const updatedClient = await prisma.client.update({
+        where: { id: clientExist.id },
+        data: {
+          confirmation: {
+            update: {
+              id: clientExist.confirmationId,
+              code: newConfirmationCode,
+              confirmed: false,
+            },
+          },
+        },
+      });
+
+      // const sentInfo = await sendCode(updatedClient.phone, newConfirmationCode);
+      // console.log(sentInfo);
+      // if (sentInfo.status !== "ok") {
+      //   return res.json({
+      //     status: responseStatus.AUTH.AUTH_WARNING,
+      //     msg: "Tasdiqlash kodi yuborilmadi, boshqatdan urinib ko'ring",
+      //   });
+      // }
+
       return res.json({
-        registered: true,
-        status: responseStatus.AUTH.BANNED,
-        msg: "Kechirasiz, sizning akkauntingiz tizim tomonidan ban qilingan!",
-        reason: clientExist.ban.reason,
+        status: responseStatus.AUTH.CONFIRMATION_CODE_SENT,
+        msg: "Telefon raqamingizga yana bir bor tasdiqlash kodi yuborildi",
+        clientStatus: updatedClient.status,
+        oneId: updatedClient.oneId,
       });
     }
 
     const edited = await prisma.client.update({
       where: { id: clientExist.id },
-      data: { lastLogin: new Date(moment().format()) },
+      data: { lastLogin: new Date(moment().format()), status: "ONLINE" },
     });
 
     const token = await createToken({ ...edited }, CLIENT_TOKEN);
 
     return res.json({
       status: responseStatus.AUTH.CLIENT_LOGIN_DONE,
-      registered: true,
-      client: edited,
+      msg: "Tizimga kirildi",
       token,
-      msg: "Tizimga kirildi!",
+      client: edited,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ error, message: error.message });
-  }
-}
-
-/**
- * @param {Request} req
- * @param {Response} res
- * @returns
- */
-async function register(req, res) {
-  try {
-    const { client } = req.body;
-
-    const existEmail = await prisma.client.findFirst({
-      where: { email: client.email },
-    });
-
-    if (existEmail) {
-      return res.json({
-        status: responseStatus.AUTH.AUTH_WARNING,
-        msg: "Bu email tizimda band qilingan, boshqasini tanlang.",
-      });
-    }
-
-    const validationFullname = /^[a-zA-Z]+(\s[a-zA-Z]+)?$/g;
-    if (!validationFullname.test(client.fullname)) {
-      return res.json({
-        status: responseStatus.AUTH.AUTH_WARNING,
-        msg: "Ism familiya lotin harflarida raqam va belgilarsiz kiritilishi lozim.",
-      });
-    }
-
-    const newId = await createId("client");
-    const hashedPass = await createPassword(client.password);
-    const confirmationCode = await generateConfirmationCode(6);
-
-    const sentInfo = await sendConfirmationCode(client.email, confirmationCode);
-
-    const createdClient = await prisma.client.create({
-      data: {
-        oneId: newId,
-        password: hashedPass,
-        fullname: client.fullname,
-        phone: client.phone,
-        createdAt: new Date(moment().format()),
-        lastLogin: new Date(moment().format()),
-        email: client.email,
-        status: "CONFIRMING",
-        ban: {
-          create: {
-            admin: "",
-            phone: client.phone,
-            date: new Date(),
-            reason: "",
-            type: "CLIENT",
-            banned: false,
-          },
-        },
-        confirmation: { create: { code: confirmationCode, confirmed: false } },
-      },
-    });
-
-    const token = await createToken({ ...createdClient }, CLIENT_TOKEN);
-
-    return res.json({
-      status: responseStatus.AUTH.CONFIRMATION_CODE_SENT,
-      client: createdClient,
-      token,
-      msg: "Emailingizga 6 xonali tasdiqlash kodi yuborildi. Shuni belgilangan qatorlarga kiritib, ro'yxatdan o'tishni yakunlang.",
-      sentInfo,
-    });
-  } catch (error) {
     return res.status(500).json({ error, message: error.message });
   }
 }
@@ -175,7 +175,7 @@ async function check(req, res) {
 
     const client = await prisma.client.findUnique({
       where: { oneId },
-      include: { ban: true },
+      include: { ban: true, confirmation: true },
     });
 
     // checks client
@@ -210,6 +210,14 @@ async function check(req, res) {
       return res.json({
         status: responseStatus.AUTH.BANNED,
         msg: `Akkaunt bloklangan: ${client.ban.reason}`,
+      });
+    }
+
+    // checks if client is confirmed
+    if (client.status === "CONFIRMING" && !client.confirmation.confirmed) {
+      return res.json({
+        status: responseStatus.AUTH.CLIENT_NOT_CONFIRMED,
+        msg: "Mijoz akkaunti hali tasdiqlanmagan",
       });
     }
 
@@ -273,8 +281,8 @@ async function confirmClientWithCode(req, res) {
           status: "ONLINE",
           confirmation: {
             update: {
-              where: { id: existClient.confirmation.id },
-              data: { code: "", confirmed: true },
+              code: "",
+              confirmed: true,
             },
           },
         },
@@ -306,8 +314,8 @@ async function confirmClientWithCode(req, res) {
         status: "ONLINE",
         confirmation: {
           update: {
-            where: { id: existClient.confirmation.id },
-            data: { code: "", confirmed: true },
+            code: "",
+            confirmed: true,
           },
         },
       },
@@ -339,17 +347,40 @@ async function sendConfirmationAgain(req, res) {
     if (client.status !== "CONFIRMING" && client.confirmation.confirmed) {
       return res.json({
         status: responseStatus.AUTH.CONFIRMATION_DONE,
-        msg: "Akkaunt allqachon tasdiqlangan.",
+        msg: "Akkaunt allaqachon tasdiqlangan.",
+        client,
       });
     }
 
     const confirmationCode = await generateConfirmationCode(6);
-    const sentInfo = await sendConfirmationCode(client.email, confirmationCode);
+    const updatedClient = await prisma.client.update({
+      where: { oneId },
+      data: {
+        confirmation: {
+          update: {
+            code: confirmationCode,
+            confirmed: false,
+          },
+        },
+      },
+    });
+
+    console.log("Client updated: ", updatedClient);
+
+    // const sentInfo = await sendCode(client.phone, confirmationCode);
+
+    // if (sentInfo.status !== "ok") {
+    //   return res.json({
+    //     status: responseStatus.AUTH.AUTH_WARNING,
+    //     msg: "Tasdiqlash kodini yuborishda xatolik yuzaga keldi, boshqatdan urinib ko'ring",
+    //     // sentInfo,
+    //   });
+    // }
 
     return res.json({
       status: responseStatus.AUTH.CONFIRMATION_CODE_SENT,
-      msg: "Kod yuborildi.",
-      sentInfo,
+      msg: "Tasdiqlash kodi yuborildi",
+      // sentInfo,
     });
   } catch (error) {
     console.log(error);
@@ -358,7 +389,6 @@ async function sendConfirmationAgain(req, res) {
 }
 
 module.exports = {
-  register,
   auth,
   check,
   confirmClientWithCode,
