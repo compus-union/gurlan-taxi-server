@@ -17,7 +17,6 @@ model Client {
   fullname       String
   phone          String        @unique
   password       String
-  email          String?       @unique
   bonus          String?
   moneySpent     String?
   rides          Ride[]
