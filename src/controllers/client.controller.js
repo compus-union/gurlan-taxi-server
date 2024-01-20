@@ -76,7 +76,7 @@ async function auth(req, res) {
       return res.json({
         status: responseStatus.AUTH.CONFIRMATION_CODE_SENT,
         msg: "Tizimga kirish uchun telefon raqamingizga tasdiqlash kodi yuborildi",
-        sentInfo,
+        // sentInfo,
         clientStatus: updatedClient.status,
         oneId: updatedClient.oneId,
       });
