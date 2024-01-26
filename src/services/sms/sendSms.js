@@ -42,7 +42,7 @@ async function sendCode(phone, code) {
       };
     }
   } catch (error) {
-    console.log(error);
+    console.log(error.data);
     return {
       status: "bad",
       message: error.message || "Qandaydir xatolik yuzaga keldi",

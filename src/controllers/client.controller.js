@@ -63,20 +63,20 @@ async function auth(req, res) {
         },
       });
 
-      // const sentInfo = await sendCode(phone, newConfirmationCode);
+      const sentInfo = await sendCode(phone, newConfirmationCode);
 
-      // if (sentInfo.status !== "ok") {
-      //   return res.json({
-      //     status: responseStatus.AUTH.AUTH_WARNING,
-      //     msg: "Tasdiqlash kodini yuborishda xatolik yuzaga keldi, boshqatdan urinib ko'ring",
-      //     // sentInfo,
-      //   });
-      // }
+      if (sentInfo.status !== "ok") {
+        return res.json({
+          status: responseStatus.AUTH.AUTH_WARNING,
+          msg: "Tasdiqlash kodini yuborishda xatolik yuzaga keldi, boshqatdan urinib ko'ring",
+          sentInfo,
+        });
+      }
 
       return res.json({
         status: responseStatus.AUTH.CONFIRMATION_CODE_SENT,
         msg: "Tizimga kirish uchun telefon raqamingizga tasdiqlash kodi yuborildi",
-        // sentInfo,
+        sentInfo,
         clientStatus: updatedClient.status,
         oneId: updatedClient.oneId,
       });
@@ -119,14 +119,14 @@ async function auth(req, res) {
         },
       });
 
-      // const sentInfo = await sendCode(updatedClient.phone, newConfirmationCode);
-      // console.log(sentInfo);
-      // if (sentInfo.status !== "ok") {
-      //   return res.json({
-      //     status: responseStatus.AUTH.AUTH_WARNING,
-      //     msg: "Tasdiqlash kodi yuborilmadi, boshqatdan urinib ko'ring",
-      //   });
-      // }
+      const sentInfo = await sendCode(updatedClient.phone, newConfirmationCode);
+      console.log(sentInfo);
+      if (sentInfo.status !== "ok") {
+        return res.json({
+          status: responseStatus.AUTH.AUTH_WARNING,
+          msg: "Tasdiqlash kodi yuborilmadi, boshqatdan urinib ko'ring",
+        });
+      }
 
       return res.json({
         status: responseStatus.AUTH.CONFIRMATION_CODE_SENT,
