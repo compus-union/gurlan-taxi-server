@@ -63,15 +63,15 @@ async function auth(req, res) {
         },
       });
 
-      // const sentInfo = await sendCode(phone, newConfirmationCode);
+      const sentInfo = await sendCode(phone, newConfirmationCode);
 
-      // if (sentInfo.status !== "ok") {
-      //   return res.json({
-      //     status: responseStatus.AUTH.AUTH_WARNING,
-      //     msg: "Tasdiqlash kodini yuborishda xatolik yuzaga keldi, boshqatdan urinib ko'ring",
-      //     // sentInfo,
-      //   });
-      // }
+      if (sentInfo.status !== "ok") {
+        return res.json({
+          status: responseStatus.AUTH.AUTH_WARNING,
+          msg: "Tasdiqlash kodini yuborishda xatolik yuzaga keldi, boshqatdan urinib ko'ring",
+          sentInfo,
+        });
+      }
 
       return res.json({
         status: responseStatus.AUTH.CONFIRMATION_CODE_SENT,
@@ -91,7 +91,7 @@ async function auth(req, res) {
 
     const isPasswordCorrect = await checkPassword(
       password,
-      clientExist.password
+      clientExist.password,
     );
 
     if (!isPasswordCorrect) {
@@ -119,14 +119,14 @@ async function auth(req, res) {
         },
       });
 
-      // const sentInfo = await sendCode(updatedClient.phone, newConfirmationCode);
-      // console.log(sentInfo);
-      // if (sentInfo.status !== "ok") {
-      //   return res.json({
-      //     status: responseStatus.AUTH.AUTH_WARNING,
-      //     msg: "Tasdiqlash kodi yuborilmadi, boshqatdan urinib ko'ring",
-      //   });
-      // }
+      const sentInfo = await sendCode(updatedClient.phone, newConfirmationCode);
+      console.log(sentInfo);
+      if (sentInfo.status !== "ok") {
+        return res.json({
+          status: responseStatus.AUTH.AUTH_WARNING,
+          msg: "Tasdiqlash kodi yuborilmadi, boshqatdan urinib ko'ring",
+        });
+      }
 
       return res.json({
         status: responseStatus.AUTH.CONFIRMATION_CODE_SENT,
@@ -388,9 +388,45 @@ async function sendConfirmationAgain(req, res) {
   }
 }
 
+/**
+ * @param {Request} req
+ * @param {Response} res
+ * @returns
+ */
+async function getSelf(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const clientAccount = await prisma.client.findUnique({
+      where: { oneId },
+      include: { ban: true, confirmation: true },
+    });
+
+    if (!clientAccount) {
+      return res.json({
+        status: responseStatus.AUTH.CLIENT_NOT_FOUND,
+        msg: "Foydalanuvchi akkaunti topilmadi",
+      });
+    }
+
+    const newToken = await createToken({ ...clientAccount }, CLIENT_TOKEN);
+
+    return res.json({
+      client: clientAccount,
+      status: "ok",
+      msg: "Hammasi joyida",
+      token: newToken,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
 module.exports = {
   auth,
   check,
   confirmClientWithCode,
   sendConfirmationAgain,
+  getSelf,
 };
