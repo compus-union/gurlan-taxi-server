@@ -3,7 +3,6 @@ const prisma = new PrismaClient();
 const { verifyToken } = require("../utils/jwt.util");
 const { CLIENT_TOKEN } = require("../configs/token.config");
 const { responseStatus } = require("../constants/index");
-const { response } = require("express");
 
 async function checkAvailability(req, res, next) {
   try {
@@ -68,6 +67,7 @@ async function checkBan(req, res, next) {
 
     const client = await prisma.client.findUnique({
       where: { oneId },
+      include: { ban: true },
     });
 
     if (client.ban.banned) {
