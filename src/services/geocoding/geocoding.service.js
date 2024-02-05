@@ -5,7 +5,7 @@ const axios = require("axios").default;
 async function searchPlaceService(q) {
   try {
     const response = await axios.get(
-      GEOCODING_URL + `/search?q=${q} Gurlan&format=json&addressdetails=1`
+      GEOCODING_URL + `/search?q=${q} Gurlan&format=json&addressdetails=1&limit=40`
     );
 
     if (!response) {
