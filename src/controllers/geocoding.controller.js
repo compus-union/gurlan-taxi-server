@@ -1,5 +1,6 @@
 const {
   searchPlaceService,
+  geocodingService,
 } = require("../services/geocoding/geocoding.service");
 
 async function searchPlace(req, res) {
@@ -24,4 +25,24 @@ async function searchPlace(req, res) {
   }
 }
 
-module.exports = { searchPlace };
+async function geocoding(req, res) {
+  try {
+    const { coords } = req.body;
+
+    const response = await geocodingService(coords);
+
+    if (!response) {
+      return res.json({
+        status: "no-connection",
+        msg: "Couldn't get data from OSM",
+      });
+    }
+
+    return res.json({ status: "ok", data: response });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+module.exports = { searchPlace, geocoding };
