@@ -52,7 +52,19 @@ async function geocodingService(coords) {
       throw new Error("Ma'lumotlarni olib kelishda muammo yuzaga keldi");
     }
 
-    return response;
+    const { lat, lon, name, display_name, address, place_id } = response.data;
+
+    const finalResult = {
+      lat: +lat,
+      lng: +lon,
+      name,
+      displayName: display_name,
+      road: address.road,
+      houseNumber: address.house_number,
+      placeId: place_id,
+    };
+
+    return { status: "ok", data: finalResult };
   } catch (error) {
     console.log(error.message);
     return error;

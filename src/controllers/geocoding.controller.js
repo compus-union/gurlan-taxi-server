@@ -38,7 +38,14 @@ async function geocoding(req, res) {
       });
     }
 
-    return res.json({ status: "ok", data: response });
+    if (response.status !== "ok") {
+      return res.json({
+        status: "no-connection",
+        msg: "No way in getting data from OSM",
+      });
+    }
+
+    return res.json({ status: "ok", data: response.data });
   } catch (error) {
     console.log(error);
     return res.status(500).json(error);
