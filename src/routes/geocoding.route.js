@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const {
   searchPlace,
+  geocoding,
 } = require("../controllers/geocoding.controller");
 const {
   checkSelfAccess,
@@ -18,6 +19,15 @@ router.get(
   checkBan,
   checkSelfAccess,
   searchPlace
+);
+
+router.get(
+  "/geocoding/:oneId",
+  checkAvailability,
+  checkRegistered,
+  checkBan,
+  checkSelfAccess,
+  geocoding
 );
 
 module.exports = router;
