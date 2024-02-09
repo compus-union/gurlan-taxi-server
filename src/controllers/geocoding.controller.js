@@ -27,9 +27,9 @@ async function searchPlace(req, res) {
 
 async function geocoding(req, res) {
   try {
-    const { coords } = req.body;
+    const { lat, lng } = req.params;
 
-    const response = await geocodingService(coords);
+    const response = await geocodingService({ lat, lng });
 
     if (!response) {
       return res.json({
