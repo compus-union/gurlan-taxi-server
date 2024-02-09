@@ -22,7 +22,7 @@ router.get(
 );
 
 router.get(
-  "/geocoding/:oneId",
+  "/reverse/:oneId/:lat/:lng",
   checkAvailability,
   checkRegistered,
   checkBan,
