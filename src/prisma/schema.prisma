@@ -147,6 +147,14 @@ model Approval {
   Admin    Admin[]
 }
 
+model PromoCode {
+  id    String   @id @unique @default(cuid())
+  code  String
+  date  DateTime
+  users Json
+  price String
+}
+
 enum ApprovalTypes {
   true
   false
