@@ -12,6 +12,7 @@ const { cronInitialize } = require("./crons/primeTime");
 
 const server = http.createServer(app);
 const io = new Server(server);
+global.io = io
 
 app.use(express.json());
 app.use(compression());
@@ -29,10 +30,6 @@ app.use("@", express.static(__dirname));
 io.on("connection", (socket) => {
   console.log("Socket connection set ", Date.now().toLocaleString());
 
-  // app.use(function (req, res, next) {
-  //   req.io = socket;
-  //   next();
-  // });
 
   socket.on("disconnect", () => {
     console.log("Socket disconnection detected ", Date.now().toLocaleString());

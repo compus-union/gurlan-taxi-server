@@ -29,7 +29,7 @@ const rideSchema = new Schema(
     },
     status: {
       type: String,
-      default: "going", // clientLooking, clientWaiting, driverWaiting, onTheWay
+      default: "clientLooking", // clientLooking, clientWaiting, driverWaiting, onTheWay
     },
     price: {
       type: String,

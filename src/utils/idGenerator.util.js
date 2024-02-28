@@ -2,7 +2,7 @@ const MIN = 1000000;
 const MAX = 9999999;
 
 /**
- * @param {"client" | "driver" | "admin" | "car" | "time"} field
+ * @param {"client" | "driver" | "admin" | "car" | "time" | "ride"} field
  */
 
 async function createId(field) {
@@ -50,6 +50,16 @@ async function createId(field) {
 
   if (field === "time") {
     const letterCombinations = ["TA", "TB", "TD", "TE", "TF"];
+
+    const randomIndex = Math.floor(Math.random() * letterCombinations.length);
+
+    const randomCombination = letterCombinations[randomIndex];
+
+    return randomCombination + randomNumbers;
+  }
+
+  if (field === 'ride') {
+    const letterCombinations = ["RA", "RB", "RD", "RE", "RF"];
 
     const randomIndex = Math.floor(Math.random() * letterCombinations.length);
 
