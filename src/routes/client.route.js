@@ -7,6 +7,9 @@ const {
   confirmClientWithCode,
   sendConfirmationAgain,
   getSelf,
+  getAccount,
+  updateAccount,
+  deleteAccount,
 } = require("../controllers/client.controller");
 const {
   checkAvailability,
@@ -25,7 +28,31 @@ router.get(
   checkRegistered,
   checkBan,
   checkSelfAccess,
-  getSelf,
+  getSelf
+);
+router.get(
+  "/get-account/:oneId",
+  checkAvailability,
+  checkRegistered,
+  checkBan,
+  checkSelfAccess,
+  getAccount
+);
+router.put(
+  "/update/:oneId",
+  checkAvailability,
+  checkRegistered,
+  checkBan,
+  checkSelfAccess,
+  updateAccount
+);
+router.get(
+  "/delete/:oneId",
+  checkAvailability,
+  checkRegistered,
+  checkBan,
+  checkSelfAccess,
+  deleteAccount
 );
 
 module.exports = router;

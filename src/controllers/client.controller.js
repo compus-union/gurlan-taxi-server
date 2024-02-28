@@ -91,7 +91,7 @@ async function auth(req, res) {
 
     const isPasswordCorrect = await checkPassword(
       password,
-      clientExist.password,
+      clientExist.password
     );
 
     if (!isPasswordCorrect) {
@@ -423,10 +423,123 @@ async function getSelf(req, res) {
   }
 }
 
+/**
+ * @param {Request} req
+ * @param {Response} res
+ * @returns
+ */
+async function getAccount(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const clientAccount = await prisma.client.findUnique({
+      where: { oneId },
+      include: { ban: true, confirmation: true, rides: true },
+    });
+
+    if (!clientAccount) {
+      return res.json({
+        status: responseStatus.AUTH.CLIENT_NOT_FOUND,
+        msg: "Foydalanuvchi akkaunti topilmadi",
+      });
+    }
+
+    const newToken = await createToken({ ...clientAccount }, CLIENT_TOKEN);
+
+    return res.json({
+      client: clientAccount,
+      status: "ok",
+      msg: "Akkaunt topildi",
+      token: newToken,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+/**
+ * @param {Request} req
+ * @param {Response} res
+ * @returns
+ */
+async function updateAccount(req, res) {
+  try {
+    const { oneId } = req.params;
+    const { account } = req.body;
+
+    const clientAccount = await prisma.client.count({
+      where: { oneId },
+    });
+
+    if (!clientAccount) {
+      return res.json({
+        status: responseStatus.AUTH.CLIENT_NOT_FOUND,
+        msg: "Foydalanuvchi akkaunti topilmadi",
+      });
+    }
+
+    const updateClient = await prisma.client.update({
+      where: { oneId },
+      data: account,
+    });
+
+    const newToken = await createToken({ ...updateClient }, CLIENT_TOKEN);
+
+    return res.json({
+      client: updateClient,
+      status: "ok",
+      msg: "Akkaunt yangilandi",
+      token: newToken,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+/**
+ * @param {Request} req
+ * @param {Response} res
+ * @returns
+ */
+async function deleteAccount(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const clientAccount = await prisma.client.count({
+      where: { oneId },
+    });
+
+    if (!clientAccount) {
+      return res.json({
+        status: responseStatus.AUTH.CLIENT_NOT_FOUND,
+        msg: "Foydalanuvchi akkaunti topilmadi",
+      });
+    }
+
+    await prisma.client.delete({
+      where: { oneId },
+      include: { ban: true, rides: true, confirmation: true },
+    });
+
+    return res.json({
+      status: "ok",
+      msg: "Akkaunt o'chirildi",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
 module.exports = {
   auth,
   check,
   confirmClientWithCode,
   sendConfirmationAgain,
   getSelf,
+  getAccount,
+  updateAccount,
+  deleteAccount,
 };
