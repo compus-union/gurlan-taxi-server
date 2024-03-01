@@ -1,6 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const RideModel = require("../mongodb/Ride");
 const { createId } = require("../utils/idGenerator.util");
+const {responseStatus} = require("../constants")
 
 const prisma = new PrismaClient();
 
@@ -15,5 +16,14 @@ async function creatRoute(req, res) {
       clientId: client.oneId,
       ...ride,
     });
-  } catch (error) {}
+
+    await newRide.save();
+
+    // socket will be written
+
+    return {status: responseStatus.RIDE.RIDE_CREATED, msg: "Haydovchi qidirilmoqda"}
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error)
+  }
 }
