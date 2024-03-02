@@ -1,3 +1,5 @@
-async function calculateInitialPrice(km) {
-    
+async function calculateInitialPrice(meters) {
+
 }
+
+module.exports = { calculateInitialPrice };
