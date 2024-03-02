@@ -5,6 +5,10 @@ const {responseStatus} = require("../constants")
 
 const prisma = new PrismaClient();
 
+async function beforeRoute(req,res) {
+  
+}
+
 async function creatRoute(req, res) {
   try {
     const { ride } = req.body;
