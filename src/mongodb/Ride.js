@@ -43,6 +43,10 @@ const rideSchema = new Schema(
       type: Date,
       default: null,
     },
+    rideType: {
+      type: String,
+      required: true
+    }
   },
   { timestamps: true }
 );
