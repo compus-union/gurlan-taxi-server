@@ -116,6 +116,7 @@ model Ride {
   startedAt DateTime
   arrivedAt DateTime
   status    StatusRide
+  rideType  RideType
   clientId  String
   driverId  String
   deleted   Boolean    @default(false)
@@ -196,6 +197,13 @@ enum StatusRide {
   FINISHED
 }
 
+enum RideType {
+  STANDARD
+  COMFORT
+  MICROVAN
+  DELIVERY
+}
+
 enum StatusLicenseDocuments {
   VALID // Ready to use
   INVALID // Not valid documents
@@ -205,7 +213,7 @@ enum StatusLicenseDocuments {
 enum DriverTypes {
   COMFORT
   STANDARD
-  MICROVAN  
+  MICROVAN
   NOTMEASURED
 }
 
