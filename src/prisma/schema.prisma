@@ -157,11 +157,22 @@ model PromoCode {
 }
 
 model Price {
-  id        String @id @unique @default(cuid())
-  name      String
+  id        String     @id @unique @default(cuid())
+  name      PriceNames @unique
   amount    String
   minimumKm String
   maximumKm String
+}
+
+enum PriceNames {
+  STARTER
+  TWOKM
+  THREEKM
+  FOURKM
+  FIVEKM
+  SIXKM
+  SEVENKM
+  OUTOFZONE
 }
 
 enum ApprovalTypes {

@@ -34,4 +34,17 @@ const responseStatus = {
   },
 };
 
-module.exports = { responseStatus };
+const staticNames = {
+  PRICE_NAMES: {
+    STARTER: "STARTER",
+    TWOKM: "TWOKM",
+    THREEKM: "THREEKM",
+    FOURKM: "FOURKM",
+    FIVEKM: "FIVEKM",
+    SIXKM: "SIXKM",
+    SEVENKM: "SEVENKM",
+    OUTOFZONE: "OUTOFZONE",
+  },
+};
+
+module.exports = { responseStatus, staticNames };
