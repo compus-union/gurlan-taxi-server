@@ -168,6 +168,7 @@ model Plan {
   id         String   @id @unique @default(cuid())
   name       RideType
   extraPrice String
+  cutPrice   String
 }
 
 enum PriceNames {
