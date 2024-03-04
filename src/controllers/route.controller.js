@@ -24,7 +24,7 @@ async function calculateRoute(req, res) {
       });
     }
 
-    const result = await getGeometryOfRoute({ destination, origin });
+    const result = await getGeometryOfRoute({ destination, origin }, true);
 
     if (!result) {
       return res.json({

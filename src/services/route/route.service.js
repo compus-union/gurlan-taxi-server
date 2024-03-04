@@ -6,8 +6,9 @@ const { calculateInitialPrice } = require("../price/calculatePrice.service");
 
 /**
  * @param {{origin: {lat: number, lng: number}, destination: {lat: number, lng: number}}} coords
+ * @param {boolean} price
  */
-async function getGeometryOfRoute(coords) {
+async function getGeometryOfRoute(coords, price) {
   try {
     const result = await axios.get(
       URL +
@@ -28,8 +29,11 @@ async function getGeometryOfRoute(coords) {
     const { full, hours, minutes, seconds } = await secondsToHms(
       result.data.routes[0].duration
     );
-    const priceDetails = await calculateInitialPrice(kmFixed);
 
+    let priceDetails;
+    if (price) priceDetails = await calculateInitialPrice(kmFixed);
+
+    
     const responseToClient = {
       status: "ok",
       routes: result.data.routes[0],
