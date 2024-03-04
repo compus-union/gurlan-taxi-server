@@ -1,12 +1,43 @@
 const { PrismaClient } = require("@prisma/client");
 const RideModel = require("../mongodb/Ride");
 const { createId } = require("../utils/idGenerator.util");
-const {responseStatus} = require("../constants")
+const { responseStatus } = require("../constants");
+const { getGeometryOfRoute } = require("../services/route/route.service");
 
 const prisma = new PrismaClient();
 
-async function beforeRoute(req,res) {
-  
+async function calculateRoute(req, res) {
+  try {
+    const { destination, origin } = req.body;
+
+    if (!destination) {
+      return res.json({
+        status: "bad",
+        msg: "destination obyekti kiritilishi kerak",
+      });
+    }
+
+    if (!origin) {
+      return res.json({
+        status: "bad",
+        msg: "origin obyekti kiritilishi kerak",
+      });
+    }
+
+    const result = await getGeometryOfRoute({ destination, origin }, true);
+
+    if (!result) {
+      return res.json({
+        status: "bad",
+        msg: "Marshrutni olishda muammo yuzaga keldi, boshqatdan urinib ko'ring",
+      });
+    }
+
+    return res.json(result);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
 }
 
 async function creatRoute(req, res) {
@@ -25,9 +56,14 @@ async function creatRoute(req, res) {
 
     // socket will be written
 
-    return {status: responseStatus.RIDE.RIDE_CREATED, msg: "Haydovchi qidirilmoqda"}
+    return {
+      status: responseStatus.RIDE.RIDE_CREATED,
+      msg: "Haydovchi qidirilmoqda",
+    };
   } catch (error) {
     console.log(error);
-    return res.status(500).json(error)
+    return res.status(500).json(error);
   }
 }
+
+module.exports = { calculateRoute, creatRoute };
