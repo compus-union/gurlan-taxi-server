@@ -12,7 +12,7 @@ const { cronInitialize } = require("./crons/primeTime");
 
 const server = http.createServer(app);
 const io = new Server(server);
-global.io = io
+global.io = io;
 
 app.use(express.json());
 app.use(compression());
@@ -29,7 +29,6 @@ app.use("@", express.static(__dirname));
 
 io.on("connection", (socket) => {
   console.log("Socket connection set ", Date.now().toLocaleString());
-
 
   socket.on("disconnect", () => {
     console.log("Socket disconnection detected ", Date.now().toLocaleString());
@@ -62,6 +61,7 @@ app.use("/api/v1/client", require("./routes/client.route"));
 app.use("/api/v1/driver", require("./routes/driver.route"));
 app.use("/api/v1/geocoding", require("./routes/geocoding.route"));
 app.use("/api/v1/primeTime", require("./routes/primeTime.route"));
+app.use("/api/v1/routes", require("./routes/route.route"));
 
 app.listen(process.env.PORT, async () => {
   console.log(`Server started at ${process.env.PORT}`);
