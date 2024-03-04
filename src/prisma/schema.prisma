@@ -164,6 +164,12 @@ model Price {
   maximumKm String
 }
 
+model Plan {
+  id         String   @id @unique @default(cuid())
+  name       RideType
+  extraPrice String
+}
+
 enum PriceNames {
   STARTER
   TWOKM
