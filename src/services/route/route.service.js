@@ -21,7 +21,7 @@ async function getGeometryOfRoute(coords) {
       throw new Error("Marshrut topilmadi, boshqatdan urinib ko'ring");
     }
 
-    const { kmFixed } = await convertMetersToKm(result.data.routes[0].distance);
+    const { kmFixed, kmFull } = await convertMetersToKm(result.data.routes[0].distance);
     const { full } = await secondsToHms(result.data.routes[0].duration);
 
     const responseToClient = {
