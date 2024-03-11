@@ -10,6 +10,8 @@ async function calculateRoute(req, res) {
   try {
     const { destination, origin } = req.body;
 
+    console.log(req.body);
+
     if (!destination) {
       return res.json({
         status: "bad",
