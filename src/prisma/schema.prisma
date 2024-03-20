@@ -169,6 +169,7 @@ model Plan {
   name       RideType
   extraPrice String
   cutPrice   String
+  img        String
 }
 
 enum PriceNames {

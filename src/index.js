@@ -4,11 +4,11 @@ const cors = require("cors");
 const app = express();
 const http = require("http");
 const { Server } = require("socket.io");
-const dbConfig = require("./configs/db.config");
-const { initMongoDB } = require("./services/db/mongo.service");
 const compression = require("compression");
 const { mainEvent } = require("./events/index");
 const { cronInitialize } = require("./crons/primeTime");
+const { initializeApp } = require("firebase/app");
+const { firebaseConfig } = require("./configs/firebase.config");
 
 const server = http.createServer(app);
 const io = new Server(server);

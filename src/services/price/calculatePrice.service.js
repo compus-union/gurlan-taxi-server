@@ -1,11 +1,50 @@
 const { PrismaClient } = require("@prisma/client");
 const { staticNames } = require("../../constants");
+const { convertPlansToAvgWords } = require("../convert/convertPlans.service");
 
 const prisma = new PrismaClient();
 
+async function calculatePlanPrices(starterPrice) {
+  try {
+    const plans = await prisma.plan.findMany();
+    let UzSum = new Intl.NumberFormat("uz-UZ", {
+      style: "currency",
+      currency: "UZS",
+    });
+
+    let plansPrices = [];
+
+    plans.forEach(async (plan) => {
+      let finalPrice = 0;
+      finalPrice = finalPrice + starterPrice;
+      if (plan.cutPrice) {
+        finalPrice = finalPrice - +plan.cutPrice;
+      }
+      if (plan.extraPrice) {
+        finalPrice = finalPrice + +plan.extraPrice;
+      }
+
+      const planName = await convertPlansToAvgWords(plan.name);
+
+      plansPrices.push({
+        name: planName,
+        img: plan.img,
+        id: plan.id,
+        price: finalPrice,
+        formattedPrice: UzSum.format(finalPrice),
+      });
+    });
+
+    return plansPrices;
+  } catch (error) {
+    console.log(error);
+    return error;
+  }
+}
+
 async function calculateInitialPrice(km) {
   try {
-    if (!km) throw new Error("No price provided");
+    if (!km) throw new Error("No km provided");
     const kmInt = +km;
 
     if (kmInt < 0 || isNaN(kmInt) || !kmInt)
@@ -13,30 +52,15 @@ async function calculateInitialPrice(km) {
 
     // 0 dan 2 gacha
     if (kmInt > 0 && kmInt < 2.1) {
-      let UzSum = new Intl.NumberFormat("uz-UZ", {
-        style: "currency",
-        currency: "UZS",
-      });
-
       const starterPrice = await prisma.price.findUnique({
         where: { name: staticNames.PRICE_NAMES.STARTER },
       });
 
       const starterPriceInt = +starterPrice.amount;
-      const priceCurrencyFormat = UzSum.format(starterPriceInt);
 
-      return {
-        price: starterPriceInt,
-        formatted: priceCurrencyFormat,
-        async formatter(payload) {
-          let formatter = new Intl.NumberFormat("uz-UZ", {
-            style: "currency",
-            currency: "UZS",
-          });
+      const planPrices = await calculatePlanPrices(starterPriceInt);
 
-          return formatter.format(payload);
-        },
-      };
+      return { planPrices };
     }
 
     // 2.1 dan 2.9 gacha
@@ -45,27 +69,12 @@ async function calculateInitialPrice(km) {
         where: { name: staticNames.PRICE_NAMES.TWOKM },
       });
 
-      let UzSum = new Intl.NumberFormat("uz-UZ", {
-        style: "currency",
-        currency: "UZS",
-      });
-
       const twoKmPriceInt = +twoKmPrice.amount;
       const calculatedPrice = kmInt * twoKmPriceInt;
-      const priceCurrencyFormat = UzSum.format(calculatedPrice);
 
-      return {
-        price: calculatedPrice,
-        formatted: priceCurrencyFormat,
-        async formatter(payload) {
-          let formatter = new Intl.NumberFormat("uz-UZ", {
-            style: "currency",
-            currency: "UZS",
-          });
+      const planPrices = await calculatePlanPrices(calculatedPrice);
 
-          return formatter.format(payload);
-        },
-      };
+      return { planPrices };
     }
 
     // 3 dan 3.9 gacha
@@ -73,27 +82,13 @@ async function calculateInitialPrice(km) {
       const threeKmPrice = await prisma.price.findUnique({
         where: { name: staticNames.PRICE_NAMES.THREEKM },
       });
-      let UzSum = new Intl.NumberFormat("uz-UZ", {
-        style: "currency",
-        currency: "UZS",
-      });
 
       const threeKmPriceInt = +threeKmPrice.amount;
       const calculatedPrice = kmInt * threeKmPriceInt;
-      const priceCurrencyFormat = UzSum.format(calculatedPrice);
 
-      return {
-        price: calculatedPrice,
-        formatted: priceCurrencyFormat,
-        async formatter() {
-          let formatter = new Intl.NumberFormat("uz-UZ", {
-            style: "currency",
-            currency: "UZS",
-          });
+      const planPrices = await calculatePlanPrices(calculatedPrice);
 
-          return formatter.format(payload);
-        },
-      };
+      return { planPrices };
     }
 
     // 4 dan 4.9 gacha
@@ -101,27 +96,12 @@ async function calculateInitialPrice(km) {
       const fourKmPrice = await prisma.price.findUnique({
         where: { name: staticNames.PRICE_NAMES.FOURKM },
       });
-      let UzSum = new Intl.NumberFormat("uz-UZ", {
-        style: "currency",
-        currency: "UZS",
-      });
-
       const fourKmPriceInt = +fourKmPrice.amount;
       const calculatedPrice = kmInt * fourKmPriceInt;
-      const priceCurrencyFormat = UzSum.format(calculatedPrice);
 
-      return {
-        price: calculatedPrice,
-        formatted: priceCurrencyFormat,
-        async formatter() {
-          let formatter = new Intl.NumberFormat("uz-UZ", {
-            style: "currency",
-            currency: "UZS",
-          });
+      const planPrices = await calculatePlanPrices(calculatedPrice);
 
-          return formatter.format(payload);
-        },
-      };
+      return { planPrices };
     }
 
     // 5 dan 5.9 gacha
@@ -129,27 +109,13 @@ async function calculateInitialPrice(km) {
       const fiveKmPrice = await prisma.price.findUnique({
         where: { name: staticNames.PRICE_NAMES.FIVEKM },
       });
-      let UzSum = new Intl.NumberFormat("uz-UZ", {
-        style: "currency",
-        currency: "UZS",
-      });
 
       const fiveKmPriceInt = +fiveKmPrice.amount;
       const calculatedPrice = kmInt * fiveKmPriceInt;
-      const priceCurrencyFormat = UzSum.format(calculatedPrice);
 
-      return {
-        price: calculatedPrice,
-        formatted: priceCurrencyFormat,
-        async formatter() {
-          let formatter = new Intl.NumberFormat("uz-UZ", {
-            style: "currency",
-            currency: "UZS",
-          });
+      const planPrices = await calculatePlanPrices(calculatedPrice);
 
-          return formatter.format(payload);
-        },
-      };
+      return { planPrices };
     }
 
     // 6 dan 6.9 gacha
@@ -157,27 +123,13 @@ async function calculateInitialPrice(km) {
       const sixKmPrice = await prisma.price.findUnique({
         where: { name: staticNames.PRICE_NAMES.SIXKM },
       });
-      let UzSum = new Intl.NumberFormat("uz-UZ", {
-        style: "currency",
-        currency: "UZS",
-      });
 
       const sixKmPriceInt = +sixKmPrice.amount;
       const calculatedPrice = kmInt * sixKmPriceInt;
-      const priceCurrencyFormat = UzSum.format(calculatedPrice);
 
-      return {
-        price: calculatedPrice,
-        formatted: priceCurrencyFormat,
-        async formatter() {
-          let formatter = new Intl.NumberFormat("uz-UZ", {
-            style: "currency",
-            currency: "UZS",
-          });
+      const planPrices = await calculatePlanPrices(calculatedPrice);
 
-          return formatter.format(payload);
-        },
-      };
+      return { planPrices };
     }
 
     // 7 dan 7.9 gacha
@@ -185,27 +137,13 @@ async function calculateInitialPrice(km) {
       const sevenKmPrice = await prisma.price.findUnique({
         where: { name: staticNames.PRICE_NAMES.SEVENKM },
       });
-      let UzSum = new Intl.NumberFormat("uz-UZ", {
-        style: "currency",
-        currency: "UZS",
-      });
 
       const sevenKmPriceInt = +sevenKmPrice.amount;
       const calculatedPrice = kmInt * sevenKmPriceInt;
-      const priceCurrencyFormat = UzSum.format(calculatedPrice);
 
-      return {
-        price: calculatedPrice,
-        formatted: priceCurrencyFormat,
-        async formatter() {
-          let formatter = new Intl.NumberFormat("uz-UZ", {
-            style: "currency",
-            currency: "UZS",
-          });
+      const planPrices = await calculatePlanPrices(calculatedPrice);
 
-          return formatter.format(payload);
-        },
-      };
+      return { planPrices };
     }
 
     // 8 dan keyingi Out of Zone
@@ -213,27 +151,13 @@ async function calculateInitialPrice(km) {
       const outOfZonePrice = await prisma.price.findUnique({
         where: { name: staticNames.PRICE_NAMES.OUTOFZONE },
       });
-      let UzSum = new Intl.NumberFormat("uz-UZ", {
-        style: "currency",
-        currency: "UZS",
-      });
 
       const outOfZonePriceInt = +outOfZonePrice.amount;
       const calculatedPrice = kmInt * outOfZonePriceInt;
-      const priceCurrencyFormat = UzSum.format(calculatedPrice);
 
-      return {
-        price: calculatedPrice,
-        formatted: priceCurrencyFormat,
-        async formatter() {
-          let formatter = new Intl.NumberFormat("uz-UZ", {
-            style: "currency",
-            currency: "UZS",
-          });
+      const planPrices = await calculatePlanPrices(calculatedPrice);
 
-          return formatter.format(payload);
-        },
-      };
+      return { planPrices };
     }
   } catch (error) {
     console.log("Error in calculatePrice.service", error.message);
