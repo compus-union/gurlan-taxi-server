@@ -6,4 +6,13 @@ async function generateConfirmationCode(length) {
   return result.toString()
 }
 
-module.exports = { generateConfirmationCode };
+async function generatePromocode(length) {
+  const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let promoCode = '';
+  for (let i = 0; i < length; i++) {
+      promoCode += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return promoCode;
+}
+
+module.exports = { generateConfirmationCode, generatePromocode };

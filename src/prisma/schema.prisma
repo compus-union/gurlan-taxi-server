@@ -29,6 +29,8 @@ model Client {
   confirmation   Confirmation  @relation(fields: [confirmationId], references: [id])
   approvalId     String?
   confirmationId String
+  promocode      PromoCode     @relation(fields: [promoCodeId], references: [id])
+  promoCodeId    String
 }
 
 model Confirmation {
@@ -149,11 +151,14 @@ model Approval {
 }
 
 model PromoCode {
-  id    String   @id @unique @default(cuid())
-  code  String
-  date  DateTime
-  users Json
-  price String
+  id         String   @id @unique @default(cuid())
+  code       String
+  date       DateTime
+  users      Json
+  price      String
+  percentage String
+  personal   Boolean
+  Client     Client[]
 }
 
 model Price {

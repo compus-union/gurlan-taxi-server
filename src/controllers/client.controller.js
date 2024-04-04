@@ -5,8 +5,10 @@ const { checkPassword, createPassword } = require("../utils/password.util");
 const { responseStatus } = require("../constants/index");
 const { createId } = require("../utils/idGenerator.util");
 const moment = require("moment");
-const { generateConfirmationCode } = require("../utils/codeGenerator.util");
-
+const {
+  generateConfirmationCode,
+  generatePromocode,
+} = require("../utils/codeGenerator.util");
 const { sendCode } = require("../services/sms/sendSms");
 
 const prisma = new PrismaClient();
@@ -37,6 +39,7 @@ async function auth(req, res) {
       const newOneId = await createId("client");
       const newConfirmationCode = await generateConfirmationCode(6);
       const hashedPass = await createPassword(password);
+      const promoCode = await generatePromocode(6);
 
       const updatedClient = await prisma.client.create({
         data: {
@@ -58,6 +61,16 @@ async function auth(req, res) {
               reason: "",
               type: "CLIENT",
               banned: false,
+            },
+          },
+          promocode: {
+            create: {
+              date: new Date(),
+              personal: true,
+              users: {},
+              percentage: "20",
+              price: "",
+              code: promoCode,
             },
           },
         },
@@ -227,7 +240,7 @@ async function check(req, res) {
       status: responseStatus.AUTH.CLIENT_CHECK_DONE,
       msg: "Hammasi ok",
       token: newToken,
-      client,
+      client: { oneId: client.oneId },
     });
   } catch (error) {
     console.log(error);
@@ -398,7 +411,7 @@ async function getSelf(req, res) {
 
     const clientAccount = await prisma.client.findUnique({
       where: { oneId },
-      include: { ban: true, confirmation: true },
+      include: { ban: true, confirmation: true, rides: true, promocode: true },
     });
 
     if (!clientAccount) {
