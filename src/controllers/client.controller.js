@@ -515,6 +515,46 @@ async function updateAccount(req, res) {
  * @param {Response} res
  * @returns
  */
+async function updatePersonalInfo(req, res) {
+  try {
+    const { oneId } = req.params;
+    const { fullname, phone } = req.body;
+
+    const clientAccount = await prisma.client.count({
+      where: { oneId },
+    });
+
+    if (!clientAccount) {
+      return res.json({
+        status: responseStatus.AUTH.CLIENT_NOT_FOUND,
+        msg: "Foydalanuvchi akkaunti topilmadi",
+      });
+    }
+
+    const updatedClient = await prisma.client.update({
+      where: { oneId },
+      data: { fullname, phone },
+    });
+
+    const newToken = await createToken({ ...updatedClient }, CLIENT_TOKEN);
+
+    return res.json({
+      client: updatedClient,
+      token: newToken,
+      status: "ok",
+      msg: "Akkauntingiz yangilandi",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+/**
+ * @param {Request} req
+ * @param {Response} res
+ * @returns
+ */
 async function deleteAccount(req, res) {
   try {
     const { oneId } = req.params;
@@ -554,4 +594,5 @@ module.exports = {
   getAccount,
   updateAccount,
   deleteAccount,
+  updatePersonalInfo
 };
