@@ -27,7 +27,7 @@ async function calculatePlanPrices(starterPrice) {
       const planName = await convertPlansToAvgWords(plan.name);
 
       plansPrices.push({
-        name: planName,
+        name: planName.toUpperCase(),
         img: plan.img,
         id: plan.id,
         price: finalPrice,
