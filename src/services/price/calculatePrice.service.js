@@ -27,7 +27,7 @@ async function calculatePlanPrices(starterPrice) {
       const planName = await convertPlansToAvgWords(plan.name);
 
       plansPrices.push({
-        name: planName,
+        name: planName.toUpperCase(),
         img: plan.img,
         id: plan.id,
         price: finalPrice,
@@ -160,6 +160,7 @@ async function calculateInitialPrice(km) {
       return { planPrices };
     }
   } catch (error) {
+    console.log(error);
     console.log("Error in calculatePrice.service", error.message);
     return { error, msg: error.message };
   }

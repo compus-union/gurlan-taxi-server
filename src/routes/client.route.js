@@ -10,6 +10,7 @@ const {
   getAccount,
   updateAccount,
   deleteAccount,
+  updatePersonalInfo,
 } = require("../controllers/client.controller");
 const {
   checkAvailability,
@@ -46,13 +47,21 @@ router.put(
   checkSelfAccess,
   updateAccount
 );
-router.get(
+router.delete(
   "/delete/:oneId",
   checkAvailability,
   checkRegistered,
   checkBan,
   checkSelfAccess,
   deleteAccount
+);
+router.put(
+  "/update-personal-info/:oneId",
+  checkAvailability,
+  checkRegistered,
+  checkBan,
+  checkSelfAccess,
+  updatePersonalInfo
 );
 
 module.exports = router;

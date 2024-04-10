@@ -5,8 +5,10 @@ const { checkPassword, createPassword } = require("../utils/password.util");
 const { responseStatus } = require("../constants/index");
 const { createId } = require("../utils/idGenerator.util");
 const moment = require("moment");
-const { generateConfirmationCode } = require("../utils/codeGenerator.util");
-
+const {
+  generateConfirmationCode,
+  generatePromocode,
+} = require("../utils/codeGenerator.util");
 const { sendCode } = require("../services/sms/sendSms");
 
 const prisma = new PrismaClient();
@@ -37,6 +39,7 @@ async function auth(req, res) {
       const newOneId = await createId("client");
       const newConfirmationCode = await generateConfirmationCode(6);
       const hashedPass = await createPassword(password);
+      const promoCode = await generatePromocode(6);
 
       const updatedClient = await prisma.client.create({
         data: {
@@ -58,6 +61,16 @@ async function auth(req, res) {
               reason: "",
               type: "CLIENT",
               banned: false,
+            },
+          },
+          promocode: {
+            create: {
+              date: new Date(),
+              personal: true,
+              users: {},
+              percentage: "20",
+              price: "",
+              code: promoCode,
             },
           },
         },
@@ -227,7 +240,7 @@ async function check(req, res) {
       status: responseStatus.AUTH.CLIENT_CHECK_DONE,
       msg: "Hammasi ok",
       token: newToken,
-      client,
+      client: { oneId: client.oneId },
     });
   } catch (error) {
     console.log(error);
@@ -398,7 +411,7 @@ async function getSelf(req, res) {
 
     const clientAccount = await prisma.client.findUnique({
       where: { oneId },
-      include: { ban: true, confirmation: true },
+      include: { ban: true, confirmation: true, rides: true, promocode: true },
     });
 
     if (!clientAccount) {
@@ -502,6 +515,46 @@ async function updateAccount(req, res) {
  * @param {Response} res
  * @returns
  */
+async function updatePersonalInfo(req, res) {
+  try {
+    const { oneId } = req.params;
+    const { fullname, phone } = req.body;
+
+    const clientAccount = await prisma.client.count({
+      where: { oneId },
+    });
+
+    if (!clientAccount) {
+      return res.json({
+        status: responseStatus.AUTH.CLIENT_NOT_FOUND,
+        msg: "Foydalanuvchi akkaunti topilmadi",
+      });
+    }
+
+    const updatedClient = await prisma.client.update({
+      where: { oneId },
+      data: { fullname, phone },
+    });
+
+    const newToken = await createToken({ ...updatedClient }, CLIENT_TOKEN);
+
+    return res.json({
+      client: updatedClient,
+      token: newToken,
+      status: "ok",
+      msg: "Akkauntingiz yangilandi",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
+
+/**
+ * @param {Request} req
+ * @param {Response} res
+ * @returns
+ */
 async function deleteAccount(req, res) {
   try {
     const { oneId } = req.params;
@@ -541,4 +594,5 @@ module.exports = {
   getAccount,
   updateAccount,
   deleteAccount,
+  updatePersonalInfo
 };
