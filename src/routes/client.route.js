@@ -11,6 +11,7 @@ const {
   updateAccount,
   deleteAccount,
   updatePersonalInfo,
+  getBonus,
 } = require("../controllers/client.controller");
 const {
   checkAvailability,
@@ -62,6 +63,14 @@ router.put(
   checkBan,
   checkSelfAccess,
   updatePersonalInfo
+);
+router.get(
+  "/get-bonus/:oneId",
+  checkAvailability,
+  checkRegistered,
+  checkBan,
+  checkSelfAccess,
+  getBonus
 );
 
 module.exports = router;

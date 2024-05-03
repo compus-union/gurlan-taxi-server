@@ -585,6 +585,30 @@ async function deleteAccount(req, res) {
   }
 }
 
+/**
+ * @param {Request} req
+ * @param {Response} res
+ * @returns
+ */
+async function getBonus(req, res) {
+  try {
+    const { oneId } = req.params;
+
+    const client = await prisma.client.findUnique({ where: { oneId } });
+
+    if (!client) {
+      return res.json({
+        status: responseStatus.AUTH.CLIENT_NOT_FOUND,
+        msg: "Mijoz akkaunti topilmadi",
+      });
+    }
+
+    return res.json({ status: "ok", bonus: client.bonus });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error)
+  }
+}
 module.exports = {
   auth,
   check,
@@ -594,5 +618,6 @@ module.exports = {
   getAccount,
   updateAccount,
   deleteAccount,
-  updatePersonalInfo
+  updatePersonalInfo,
+  getBonus
 };
