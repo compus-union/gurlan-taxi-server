@@ -7,13 +7,21 @@ const { Server } = require("socket.io");
 const compression = require("compression");
 const { mainEvent } = require("./events/index");
 const { cronInitialize } = require("./crons/primeTime");
-const { initializeApp } = require("firebase/app");
-const { firebaseConfig } = require("./configs/firebase.config");
+const {
+  addConnectedUser,
+  removeConnectedUser,
+  connections,
+} = require("./socket-connections");
 
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:8100", "http://localhost:5173"],
+  },
+});
 global.io = io;
 
+app.use(express.static(__dirname + "/public"));
 app.use(express.json());
 app.use(compression());
 app.use(cors({ origin: "*" }));
@@ -28,10 +36,24 @@ app.use("@", express.static(__dirname));
 //   });
 
 io.on("connection", (socket) => {
-  console.log("Socket connection set ", Date.now().toLocaleString());
+  console.log("just a blank connection");
+  socket.on("connection:init", async (data) => {
+    await addConnectedUser(data);
+    console.log(connections);
+  });
 
-  socket.on("disconnect", () => {
-    console.log("Socket disconnection detected ", Date.now().toLocaleString());
+  let disconnectedUserId = "";
+
+  socket.on("connection:disconnect", async (data) => {
+    disconnectedUserId = data.user.oneId;
+    console.log(disconnectedUserId);
+  });
+
+  socket.on("disconnect", async () => {
+    await removeConnectedUser(disconnectedUserId);
+    if (disconnectedUserId) disconnectedUserId = "";
+    console.log("Socket disconnection detected ", new Date().toISOString());
+    console.log(connections);
   });
 });
 
@@ -63,6 +85,6 @@ app.use("/api/v1/geocoding", require("./routes/geocoding.route"));
 app.use("/api/v1/primeTime", require("./routes/primeTime.route"));
 app.use("/api/v1/routes", require("./routes/route.route"));
 
-app.listen(process.env.PORT, async () => {
+server.listen(process.env.PORT, async () => {
   console.log(`Server started at ${process.env.PORT}`);
 });
