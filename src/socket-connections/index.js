@@ -6,7 +6,7 @@ async function addConnectedUser(user) {
     userType: user.type,
   });
 
-  const addedUser = connections.get(user.oneId);
+  const addedUser = connections.get(user.oneId);  
 
   return { user: addedUser };
 }
