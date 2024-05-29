@@ -23,7 +23,7 @@ const {
 
 router.post("/register", checkRegister, register);
 router.post("/login", driverRegistered, checkLogin, login);
-router.post("/emergency-login", login)
+router.post("/emergency-login", checkLogin, login)
 router.post(
   "/send-images/:oneId/:password",
   checkImages,

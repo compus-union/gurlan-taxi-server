@@ -204,7 +204,17 @@ async function checkRegister(req, res, next) {
 
 async function checkLogin(req, res, next) {
   try {
-    const { oneId, password, emergencyPassword } = req.body;
+    const { oneId, password, emergencyPassword, emergencyLogin } = req.body;
+  
+    if (
+      emergencyLogin &&
+      emergencyPassword !== PASSWORD_FOR_EMERGENCE_LOGIN_DRIVER
+    ) {
+      return res.json({
+        status: responseStatus.AUTH.AUTH_WARNING,
+        msg: "Favqulodda parol noto'g'ri" ,
+      });
+    }
 
     if (!oneId) {
       return res.json({
@@ -278,13 +288,6 @@ async function checkLogin(req, res, next) {
         status: responseStatus.AUTH.AUTH_WARNING,
         msg: "Noto'g'ri parol",
       });
-    }
-
-    if (emergencyPassword && emergencyPassword !== PASSWORD_FOR_EMERGENCE_LOGIN_DRIVER) {
-      return res.json({
-        status: responseStatus.AUTH.AUTH_WARNING,
-        msg: "Favqulodda parol noto'g'ri"
-      }) 
     }
 
     return next();
