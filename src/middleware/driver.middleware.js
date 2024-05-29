@@ -4,6 +4,9 @@ const { checkPassword } = require("../utils/password.util");
 const { verifyToken } = require("../utils/jwt.util");
 const { DRIVER_TOKEN } = require("../configs/token.config");
 const { responseStatus } = require("../constants");
+const {
+  PASSWORD_FOR_EMERGENCE_LOGIN_DRIVER,
+} = require("../configs/other.config");
 
 /**
  *
@@ -201,7 +204,7 @@ async function checkRegister(req, res, next) {
 
 async function checkLogin(req, res, next) {
   try {
-    const { oneId, password } = req.body;
+    const { oneId, password, emergencyPassword } = req.body;
 
     if (!oneId) {
       return res.json({
@@ -275,6 +278,13 @@ async function checkLogin(req, res, next) {
         status: responseStatus.AUTH.AUTH_WARNING,
         msg: "Noto'g'ri parol",
       });
+    }
+
+    if (emergencyPassword && emergencyPassword !== PASSWORD_FOR_EMERGENCE_LOGIN_DRIVER) {
+      return res.json({
+        status: responseStatus.AUTH.AUTH_WARNING,
+        msg: "Favqulodda parol noto'g'ri"
+      }) 
     }
 
     return next();
