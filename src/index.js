@@ -12,6 +12,9 @@ const {
   removeConnectedUser,
   connections,
 } = require("./socket-connections");
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -27,29 +30,32 @@ app.use(compression());
 app.use(cors({ origin: "*" }));
 app.use("@", express.static(__dirname));
 
-// initMongoDB(dbConfig.MONGO_URL)
-//   .then((info) => {
-//     console.log(info.message);
-//   })
-//   .catch((err) => {
-//     console.log(err);
-//   });
-
 io.on("connection", (socket) => {
   console.log("just a blank connection");
   socket.on("connection:init", async (data) => {
+    console.log('connection:init');
     await addConnectedUser(data);
-    console.log(connections);
+    if (data.type === "client") {
+      await prisma.client.update({
+        where: { oneId: data.oneId },
+        data: { status: "ONLINE" },
+      });
+    }
+    if (data.type === "driver") {
+      await prisma.driver.update({
+        where: { oneId: data.oneId },
+        data: { status: "ONLINE" },
+      });
+    }
   });
 
   let disconnectedUserId = "";
 
   socket.on("connection:disconnect", async (data) => {
-    disconnectedUserId = data.user.oneId;
-    console.log(disconnectedUserId);
+    socket.disconnect();
   });
 
-  socket.on("disconnect", async () => {
+  socket.on("disconnect", async (s) => {
     await removeConnectedUser(disconnectedUserId);
     if (disconnectedUserId) disconnectedUserId = "";
     console.log("Socket disconnection detected ", new Date().toISOString());
