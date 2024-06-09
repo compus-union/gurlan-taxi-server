@@ -11,6 +11,7 @@ const {
   addConnectedUser,
   removeConnectedUser,
   connections,
+  checkUserExists,
 } = require("./socket-connections");
 const { PrismaClient } = require("@prisma/client");
 
@@ -19,7 +20,11 @@ const prisma = new PrismaClient();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:8100", "http://localhost:5173"],
+    origin: [
+      "http://localhost:8100",
+      "http://localhost:5173",
+      "http://192.168.1.4:8100",
+    ],
   },
 });
 global.io = io;
@@ -33,32 +38,32 @@ app.use("@", express.static(__dirname));
 io.on("connection", (socket) => {
   console.log("just a blank connection");
   socket.on("connection:init", async (data) => {
-    console.log('connection:init');
-    await addConnectedUser(data);
-    if (data.type === "client") {
+    const userExists = await checkUserExists(data.user.socketId);
+    if (!userExists) {
+      await addConnectedUser(data.user);
+    }
+    console.log(userExists);
+    if (data.user.type === "client") {
       await prisma.client.update({
-        where: { oneId: data.oneId },
+        where: { oneId: data.user.oneId },
         data: { status: "ONLINE" },
       });
     }
-    if (data.type === "driver") {
+    console.log(connections);
+    if (data.user.type === "driver") {
       await prisma.driver.update({
-        where: { oneId: data.oneId },
+        where: { oneId: data.user.oneId },
         data: { status: "ONLINE" },
       });
     }
-  });
-
-  let disconnectedUserId = "";
-
-  socket.on("connection:disconnect", async (data) => {
-    socket.disconnect();
   });
 
   socket.on("disconnect", async (s) => {
-    await removeConnectedUser(disconnectedUserId);
-    if (disconnectedUserId) disconnectedUserId = "";
-    console.log("Socket disconnection detected ", new Date().toISOString());
+    console.log("Socket disconnection detected", new Date().toISOString());
+    const userExists = await checkUserExists(socket.id);
+    if (userExists) {
+      await removeConnectedUser(socket.id);
+    }
     console.log(connections);
   });
 });
