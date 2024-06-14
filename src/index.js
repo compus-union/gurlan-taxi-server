@@ -36,35 +36,62 @@ app.use(cors({ origin: "*" }));
 app.use("@", express.static(__dirname));
 
 io.on("connection", (socket) => {
-  console.log("just a blank connection");
+  console.log("New connection:", socket.id);
+
   socket.on("connection:init", async (data) => {
-    const userExists = await checkUserExists(data.user.socketId);
-    if (!userExists) {
-      await addConnectedUser(data.user);
-    }
-    console.log(userExists);
-    if (data.user.type === "client") {
-      await prisma.client.update({
-        where: { oneId: data.user.oneId },
-        data: { status: "ONLINE" },
+    try {
+      const userExists = await checkUserExists(socket.id);
+      if (!userExists.exists) {
+        await addConnectedUser(data.user);
+      }
+      if (data.user.type === "client") {
+        await prisma.client.update({
+          where: { oneId: data.user.oneId },
+          data: { status: "ONLINE" },
+        });
+      }
+      if (data.user.type === "driver") {
+        await prisma.driver.update({
+          where: { oneId: data.user.oneId },
+          data: { status: "ONLINE" },
+        });
+      }
+      socket.emit("message:connection-confirmed", {
+        msg: "Faollik ishga tushdi",
+        ...data.user,
       });
-    }
-    console.log(connections);
-    if (data.user.type === "driver") {
-      await prisma.driver.update({
-        where: { oneId: data.user.oneId },
-        data: { status: "ONLINE" },
-      });
+      console.log("Current connections:", connections);
+    } catch (error) {
+      console.error("Error during connection:init", error);
     }
   });
 
-  socket.on("disconnect", async (s) => {
-    console.log("Socket disconnection detected", new Date().toISOString());
-    const userExists = await checkUserExists(socket.id);
-    if (userExists) {
-      await removeConnectedUser(socket.id);
+  socket.on("disconnect", async () => {
+    console.log("Socket disconnection detected:", new Date().toISOString());
+    try {
+      const userExists = await checkUserExists(socket.id);
+      if (userExists.exists) {
+        await removeConnectedUser(socket.id);
+        if (userExists.user.userType === "client") {
+          await prisma.client.update({
+            where: { oneId: userExists.user.userOneId },
+            data: { status: "OFFLINE" },
+          });
+        }
+        if (userExists.user.userType === "driver") {
+          await prisma.driver.update({
+            where: { oneId: userExists.user.userOneId },
+            data: { status: "OFFLINE" },
+          });
+        }
+        socket.emit("message:disconnection-confirmed", {
+          msg: "Faollik uzildi",
+          ...userExists.user,
+        });
+      }
+    } catch (error) {
+      console.error("Error during disconnect", error);
     }
-    console.log(connections);
   });
 });
 
@@ -83,7 +110,7 @@ mainEvent.on("primeTimeInit", async (data) => {
   enable.start();
   disable.start();
 
-  console.log("Cronjob initalization added");
+  console.log("Cronjob initialization added");
 });
 
 app.get("/", (req, res) => {

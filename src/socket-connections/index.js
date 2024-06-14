@@ -4,6 +4,7 @@ async function addConnectedUser(user) {
   connections.set(user.socketId, {
     userOneId: user.oneId,
     userType: user.type,
+    userSocketId: user.socketId
   });
 
   const addedUser = connections.get(user.socketId);
@@ -12,9 +13,13 @@ async function addConnectedUser(user) {
 }
 
 async function checkUserExists(socketId) {
-  const userExists = connections.has(socketId);
+  const userExists = connections.get(socketId);
 
-  return userExists;
+  if (!userExists) {
+    return { exists: false };
+  }
+
+  return { exists: true, user: userExists };
 }
 
 async function removeConnectedUser(socketId) {
