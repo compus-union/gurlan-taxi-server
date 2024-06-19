@@ -606,9 +606,10 @@ async function getBonus(req, res) {
     return res.json({ status: "ok", bonus: client.bonus });
   } catch (error) {
     console.log(error);
-    return res.status(500).json(error)
+    return res.status(500).json(error);
   }
 }
+
 module.exports = {
   auth,
   check,
@@ -619,5 +620,5 @@ module.exports = {
   updateAccount,
   deleteAccount,
   updatePersonalInfo,
-  getBonus
+  getBonus,
 };

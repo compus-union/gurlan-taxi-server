@@ -278,11 +278,13 @@ async function restart(req, res) {
     const { oneId } = req.params;
 
     const driver = await prisma.driver.findUnique({ where: { oneId } });
-    
+
     await prisma.car.delete({ where: { driverId: driver.id } });
 
-    const foundApproval = await prisma.approval.findFirst({where: { type: "DRIVER", phone: driver.phone[0] }})
-   
+    const foundApproval = await prisma.approval.findFirst({
+      where: { type: "DRIVER", phone: driver.phone[0] },
+    });
+
     await prisma.approval.delete({
       where: { id: foundApproval.id },
     });
@@ -301,6 +303,30 @@ async function restart(req, res) {
     return res.status(500).json(error);
   }
 }
+
+/**
+ * @param {Request} req
+ * @param {Response} res
+ * @returns
+ */
+async function getStatus(req, res) {
+  try {
+    const { oneId } = req.params;
+    const userExists = await prisma.driver.findUnique({ where: { oneId } });
+
+    if (!userExists) {
+      return res.json({
+        status: responseStatus.AUTH.DRIVER_NOT_FOUND,
+        msg: "Haydovchi topilmadi",
+      });
+    }
+
+    return res.json({ result: userExists.status, status: "ok" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
 module.exports = {
   register,
   login,
@@ -310,4 +336,5 @@ module.exports = {
   restart,
   deleteSelf,
   checkIfLoggedIn,
+  getStatus,
 };

@@ -24,6 +24,8 @@ const io = new Server(server, {
       "http://localhost:8100",
       "http://localhost:5173",
       "http://192.168.1.4:8100",
+      "http://192.168.1.9:8100",
+      "http://192.168.1.2:8100",
     ],
   },
 });
@@ -59,6 +61,7 @@ io.on("connection", (socket) => {
       socket.emit("message:connection-confirmed", {
         msg: "Faollik ishga tushdi",
         ...data.user,
+        status: "ONLINE",
       });
       console.log("Current connections:", connections);
     } catch (error) {
@@ -66,8 +69,8 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("disconnect", async () => {
-    console.log("Socket disconnection detected:", new Date().toISOString());
+  socket.on("connection:disconnect", async () => {
+    console.log("connection:disconnect => ", new Date().toISOString());
     try {
       const userExists = await checkUserExists(socket.id);
       if (userExists.exists) {
@@ -87,7 +90,44 @@ io.on("connection", (socket) => {
         socket.emit("message:disconnection-confirmed", {
           msg: "Faollik uzildi",
           ...userExists.user,
+          status: "OFFLINE",
         });
+        socket.disconnect()
+        console.log("Current connections:", connections);
+      } else {
+        return;
+      }
+    } catch (error) {
+      console.error("Error during disconnect", error);
+    }
+  });
+
+  socket.on("disconnect", async () => {
+    console.log("blank disconnection detected => ", new Date().toISOString());
+    try {
+      const userExists = await checkUserExists(socket.id);
+      if (userExists.exists) {
+        await removeConnectedUser(socket.id);
+        if (userExists.user.userType === "client") {
+          await prisma.client.update({
+            where: { oneId: userExists.user.userOneId },
+            data: { status: "OFFLINE" },
+          });
+        }
+        if (userExists.user.userType === "driver") {
+          await prisma.driver.update({
+            where: { oneId: userExists.user.userOneId },
+            data: { status: "OFFLINE" },
+          });
+        }
+        socket.emit("message:disconnection-confirmed", {
+          msg: "Faollik uzildi",
+          ...userExists.user,
+          status: "OFFLINE",
+        });
+        console.log("Current connections:", connections);
+      } else {
+        return;
       }
     } catch (error) {
       console.error("Error during disconnect", error);

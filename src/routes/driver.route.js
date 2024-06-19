@@ -11,6 +11,7 @@ const {
   deleteSelf,
   checkIfLoggedIn,
   restart,
+  getStatus,
 } = require("../controllers/driver.controller");
 const {
   checkRegister,
@@ -19,11 +20,12 @@ const {
   checkAvailability: driverAvailability,
   checkRegistered: driverRegistered,
   checkBan: driverBan,
+  checkSelfAccess: driverCheckSelfAcces,
 } = require("../middleware/driver.middleware");
 
 router.post("/register", checkRegister, register);
 router.post("/login", driverRegistered, checkLogin, login);
-router.post("/emergency-login", checkLogin, login)
+router.post("/emergency-login", checkLogin, login);
 router.post(
   "/send-images/:oneId/:password",
   checkImages,
@@ -54,5 +56,13 @@ router.get(
 router.delete("/restart/:oneId", driverAvailability, driverRegistered, restart);
 
 router.delete("/delete-self/:oneId", deleteSelf);
+router.get(
+  "/get-status/:oneId",
+  // driverAvailability,
+  // driverRegistered,
+  // driverBan,
+  // driverCheckSelfAcces,
+  getStatus
+);
 
 module.exports = router;
