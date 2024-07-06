@@ -4,7 +4,7 @@ async function addConnectedUser(user) {
   connections.set(user.socketId, {
     userOneId: user.oneId,
     userType: user.type,
-    userSocketId: user.socketId
+    userSocketId: user.socketId,
   });
 
   const addedUser = connections.get(user.socketId);
@@ -28,9 +28,20 @@ async function removeConnectedUser(socketId) {
   return;
 }
 
+async function countOnlineDrivers() {
+  let count = 0;
+  connections.forEach((value) => {
+    if (value.userType === "driver") {
+      count++;
+    }
+  });
+  return count;
+}
+
 module.exports = {
   connections,
   addConnectedUser,
   removeConnectedUser,
   checkUserExists,
+  countOnlineDrivers
 };

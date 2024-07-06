@@ -12,6 +12,7 @@ const {
   checkIfLoggedIn,
   restart,
   getStatus,
+  getProfile,
 } = require("../controllers/driver.controller");
 const {
   checkRegister,
@@ -58,11 +59,19 @@ router.delete("/restart/:oneId", driverAvailability, driverRegistered, restart);
 router.delete("/delete-self/:oneId", deleteSelf);
 router.get(
   "/get-status/:oneId",
-  // driverAvailability,
-  // driverRegistered,
-  // driverBan,
-  // driverCheckSelfAcces,
+  driverAvailability,
+  driverRegistered,
+  driverBan,
+  driverCheckSelfAcces,
   getStatus
+);
+router.get(
+  "/get-profile/:oneId",
+  driverAvailability,
+  driverRegistered,
+  driverBan,
+  driverCheckSelfAcces,
+  getProfile
 );
 
 module.exports = router;

@@ -327,6 +327,26 @@ async function getStatus(req, res) {
     return res.status(500).json(error);
   }
 }
+
+async function getProfile(req, res) {
+  try {
+    console.log('Get Profile');
+    const { oneId } = req.params;
+    const userExists = await prisma.driver.findUnique({ where: { oneId } });
+
+    if (!userExists) {
+      return res.json({
+        status: responseStatus.AUTH.DRIVER_NOT_FOUND,
+        msg: "Haydovchi topilmadi",
+      });
+    }
+
+    return res.json({ profile: userExists, status: "ok" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+}
 module.exports = {
   register,
   login,
@@ -337,4 +357,5 @@ module.exports = {
   deleteSelf,
   checkIfLoggedIn,
   getStatus,
+  getProfile
 };

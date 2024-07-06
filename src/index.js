@@ -12,6 +12,7 @@ const {
   removeConnectedUser,
   connections,
   checkUserExists,
+  countOnlineDrivers,
 } = require("./socket-connections");
 const { PrismaClient } = require("@prisma/client");
 
@@ -26,6 +27,10 @@ const io = new Server(server, {
       "http://192.168.1.4:8100",
       "http://192.168.1.9:8100",
       "http://192.168.1.2:8100",
+      "http://192.168.1.5:8100",
+      "http://192.168.1.3:8100",
+      "http://192.168.1.8:8100",
+      "http://192.168.1.7:8100",
     ],
   },
 });
@@ -43,6 +48,14 @@ io.on("connection", (socket) => {
   socket.on("connection:init", async (data) => {
     try {
       const userExists = await checkUserExists(socket.id);
+      if (userExists.exists) {
+        socket.emit("connection:error", {
+          status: "bad",
+          msg: "Faollik ishga tushmadi, bitta akkaunt bilan bir necha qurilmadan ulanishni imkoni yo'q",
+        });
+
+        return;
+      }
       if (!userExists.exists) {
         await addConnectedUser(data.user);
       }
@@ -58,14 +71,23 @@ io.on("connection", (socket) => {
           data: { status: "ONLINE" },
         });
       }
-      socket.emit("message:connection-confirmed", {
-        msg: "Faollik ishga tushdi",
-        ...data.user,
-        status: "ONLINE",
+
+      const onlineDriversWithMap = await countOnlineDrivers();
+
+      // Emit to all connected users including the newly connected one
+      io.emit("info:online-drivers", {
+        mapCount: onlineDriversWithMap,
       });
+
+      socket.emit("message:connection-confirmed", { msg: "Faollik yoqildi, server bilan aloqa mavjud" });
+
       console.log("Current connections:", connections);
-    } catch (error) {
-      console.error("Error during connection:init", error);
+    } catch (error) {``
+      socket.emit("connection:error", {
+        status: "bad",
+        msg: error.message,
+      });
+      console.error("Error during connection:init", error.message);
     }
   });
 
@@ -84,7 +106,7 @@ io.on("connection", (socket) => {
         if (userExists.user.userType === "driver") {
           await prisma.driver.update({
             where: { oneId: userExists.user.userOneId },
-            data: { status: "OFFLINE" },
+            data: { status: "OFFLINE", lastOnline: new Date() },
           });
         }
         socket.emit("message:disconnection-confirmed", {
@@ -92,7 +114,14 @@ io.on("connection", (socket) => {
           ...userExists.user,
           status: "OFFLINE",
         });
-        socket.disconnect()
+
+        const onlineDriversWithMap = await countOnlineDrivers();
+
+        // Emit to all connected users including the newly connected one
+        io.emit("info:online-drivers", {
+          mapCount: onlineDriversWithMap,
+        });
+        socket.disconnect();
         console.log("Current connections:", connections);
       } else {
         return;
@@ -117,13 +146,20 @@ io.on("connection", (socket) => {
         if (userExists.user.userType === "driver") {
           await prisma.driver.update({
             where: { oneId: userExists.user.userOneId },
-            data: { status: "OFFLINE" },
+            data: { status: "OFFLINE", lastOnline: new Date() },
           });
         }
         socket.emit("message:disconnection-confirmed", {
           msg: "Faollik uzildi",
           ...userExists.user,
           status: "OFFLINE",
+        });
+
+        const onlineDriversWithMap = await countOnlineDrivers();
+
+        // Emit to all connected users including the newly connected one
+        io.emit("info:online-drivers", {
+          mapCount: onlineDriversWithMap,
         });
         console.log("Current connections:", connections);
       } else {
