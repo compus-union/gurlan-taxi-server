@@ -9,6 +9,9 @@ const { promises } = require("fs");
 const moment = require("moment");
 const path = require("path");
 const { responseStatus } = require("../constants");
+const {
+  convertRatingIntoAverage,
+} = require("../services/convert/convertRating.service");
 
 const prisma = new PrismaClient();
 
@@ -45,16 +48,6 @@ async function register(req, res) {
             reason: "",
             type: "DRIVER",
             banned: false,
-          },
-        },
-        approval: {
-          create: {
-            admin: "",
-            phone: phone[0],
-            date: new Date(),
-            reason: "",
-            approved: "waiting",
-            type: "DRIVER",
           },
         },
       },
@@ -184,11 +177,10 @@ async function checkIfValidated(req, res) {
 
     const driver = await prisma.driver.findUnique({
       where: { oneId },
-      include: { approval: true },
     });
     const newToken = await createToken({ ...driver }, DRIVER_TOKEN);
 
-    if (driver.status === "LIMITED" && driver.approval.approved === "waiting") {
+    if (driver.status === "LIMITED") {
       return res.json({
         status: responseStatus.AUTH.VALIDATION_WAITING,
         msg: "Hali kutasiz :)",
@@ -197,11 +189,11 @@ async function checkIfValidated(req, res) {
       });
     }
 
-    if (driver.status === "IGNORED" && driver.approval.approved === "false") {
+    if (driver.status === "IGNORED") {
       return res.json({
         status: responseStatus.AUTH.VALIDATION_FAILED,
         msg: "Ma'lumotlaringiz tasdiqlanmadi",
-        reason: driver.approval.reason,
+        reason: "Sabab mavjud emas",
       });
     }
 
@@ -226,10 +218,9 @@ async function checkIfLoggedIn(req, res) {
 
     const driver = await prisma.driver.findUnique({
       where: { oneId },
-      include: { approval: true },
     });
 
-    if (!driver.loggedIn && !driver.approval.approved) {
+    if (!driver.loggedIn) {
       return res.json({
         status: responseStatus.AUTH.DRIVER_LOGIN_FAILED,
         msg: "Haydovchi tizimga kirmagan",
@@ -253,10 +244,10 @@ async function checkIfLoggedIn(req, res) {
 async function deleteSelf(req, res) {
   try {
     const { oneId } = req.params;
-
+    // send to telegram and delete
     await prisma.driver.delete({
       where: { oneId },
-      include: { approval: true, ban: true },
+      include: { ban: true, earnings: true, car: true, rides: true },
     });
 
     return res.json({
@@ -279,19 +270,9 @@ async function restart(req, res) {
 
     const driver = await prisma.driver.findUnique({ where: { oneId } });
 
-    await prisma.car.delete({ where: { driverId: driver.id } });
-
-    const foundApproval = await prisma.approval.findFirst({
-      where: { type: "DRIVER", phone: driver.phone[0] },
-    });
-
-    await prisma.approval.delete({
-      where: { id: foundApproval.id },
-    });
-
     await prisma.driver.delete({
       where: { oneId },
-      include: { approval: true, ban: false },
+      include: { ban: false, car: true, earnings: true, rides: true },
     });
 
     return res.json({
@@ -330,9 +311,12 @@ async function getStatus(req, res) {
 
 async function getProfile(req, res) {
   try {
-    console.log('Get Profile');
+    console.log("Get Profile");
     const { oneId } = req.params;
-    const userExists = await prisma.driver.findUnique({ where: { oneId } });
+    const userExists = await prisma.driver.findUnique({
+      where: { oneId },
+      include: { ban: true, car: true, rides: true },
+    });
 
     if (!userExists) {
       return res.json({
@@ -341,7 +325,12 @@ async function getProfile(req, res) {
       });
     }
 
-    return res.json({ profile: userExists, status: "ok" });
+    const convertedRating = await convertRatingIntoAverage(userExists.rating);
+
+    return res.json({
+      profile: { ...userExists, rating: convertedRating },
+      status: "ok",
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json(error);
@@ -357,5 +346,5 @@ module.exports = {
   deleteSelf,
   checkIfLoggedIn,
   getStatus,
-  getProfile
+  getProfile,
 };
