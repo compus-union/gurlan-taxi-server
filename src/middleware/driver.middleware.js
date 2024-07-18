@@ -205,7 +205,7 @@ async function checkRegister(req, res, next) {
 async function checkLogin(req, res, next) {
   try {
     const { oneId, password, emergencyPassword, emergencyLogin } = req.body;
-  
+
     if (
       emergencyLogin &&
       emergencyPassword !== PASSWORD_FOR_EMERGENCE_LOGIN_DRIVER
