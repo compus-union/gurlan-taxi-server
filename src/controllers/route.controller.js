@@ -1,10 +1,7 @@
-const { PrismaClient } = require("@prisma/client");
 const RideModel = require("../mongodb/Ride");
 const { createId } = require("../utils/idGenerator.util");
 const { responseStatus } = require("../constants");
 const { getGeometryOfRoute } = require("../services/route/route.service");
-
-const prisma = new PrismaClient();
 
 async function calculateRoute(req, res) {
   try {

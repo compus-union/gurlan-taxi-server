@@ -205,7 +205,7 @@ async function checkRegister(req, res, next) {
 async function checkLogin(req, res, next) {
   try {
     const { oneId, password, emergencyPassword, emergencyLogin } = req.body;
-  
+
     if (
       emergencyLogin &&
       emergencyPassword !== PASSWORD_FOR_EMERGENCE_LOGIN_DRIVER
@@ -239,7 +239,7 @@ async function checkLogin(req, res, next) {
 
     const driver = await prisma.driver.findUnique({
       where: { oneId },
-      include: { approval: true, ban: true },
+      include: { ban: true },
     });
 
     if (!driver) {
@@ -259,7 +259,7 @@ async function checkLogin(req, res, next) {
     }
 
     if (
-      driver.approval.approved === "waiting" &&
+      driver.status === "LIMITED" &&
       driver.license !== "VALID" &&
       driver.registration !== "VALID"
     ) {
@@ -270,14 +270,14 @@ async function checkLogin(req, res, next) {
     }
 
     if (
-      driver.approval.approved === "false" &&
+      driver.status === "IGNORED" &&
       driver.license !== "VALID" &&
       driver.registration !== "VALID"
     ) {
       return res.json({
         status: responseStatus.AUTH.VALIDATION_FAILED,
         msg: "Haydovchi ma'lumotlari tasdiqlanmagan yoki bekor qilingan.",
-        reason: driver.approval.reason,
+        reason: "Sabab mavjud emas",
       });
     }
 

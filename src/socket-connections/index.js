@@ -1,19 +1,47 @@
 const connections = new Map();
 
 async function addConnectedUser(user) {
-  connections.set(user.oneId, {
-    userSocket: user.socketId,
+  connections.set(user.socketId, {
+    userOneId: user.oneId,
     userType: user.type,
+    userSocketId: user.socketId,
   });
 
-  const addedUser = connections.get(user.oneId);  
+  const addedUser = connections.get(user.socketId);
 
   return { user: addedUser };
 }
 
-async function removeConnectedUser(oneId) {
-  connections.delete(oneId);
+async function checkUserExists(socketId) {
+  const userExists = connections.get(socketId);
+
+  if (!userExists) {
+    return { exists: false };
+  }
+
+  return { exists: true, user: userExists };
+}
+
+async function removeConnectedUser(socketId) {
+  const removed = connections.delete(socketId);
+  console.log(`Removed: ${removed}`);
   return;
 }
 
-module.exports = { connections, addConnectedUser, removeConnectedUser };
+async function countOnlineDrivers() {
+  let count = 0;
+  connections.forEach((value) => {
+    if (value.userType === "driver") {
+      count++;
+    }
+  });
+  return count;
+}
+
+module.exports = {
+  connections,
+  addConnectedUser,
+  removeConnectedUser,
+  checkUserExists,
+  countOnlineDrivers
+};
