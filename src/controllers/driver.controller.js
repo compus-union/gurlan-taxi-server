@@ -307,7 +307,6 @@ async function getStatus(req, res) {
 
 async function getProfile(req, res) {
 	try {
-		console.log('Get Profile')
 		const { oneId } = req.params
 		const userExists = await prisma.driver.findUnique({
 			where: { oneId },
@@ -321,10 +320,45 @@ async function getProfile(req, res) {
 			})
 		}
 
+		const today = new Date()
+		const startOfDay = new Date(today.setHours(0, 0, 0, 0))
+		const endOfDay = new Date(today.setHours(23, 59, 59, 999))
+
+		const earningsToday = await prisma.earnings.findMany({
+			where: {
+				driverId: userExists.id,
+				date: {
+					gte: startOfDay,
+					lte: endOfDay,
+				},
+			},
+			select: { amount: true },
+		})
+
+		const totalEarnings = await prisma.earnings.findMany({
+			where: { driverId: userExists.id },
+			select: { amount: true },
+		})
+
+		const earningsTodayInNumber = earningsToday.reduce(
+			(total, earning) => total + earning.amount,
+			0
+		)
+
+		const totalEarningsInNumber = totalEarnings.reduce(
+			(total, earning) => total + earning.amount,
+			0
+		)
+
 		const convertedRating = await convertRatingIntoAverage(userExists.rating)
 
 		return res.json({
-			profile: { ...userExists, rating: convertedRating },
+			profile: {
+				...userExists,
+				rating: convertedRating,
+				earnings: earningsTodayInNumber,
+				totalEarnings: totalEarningsInNumber,
+			},
 			status: 'ok',
 		})
 	} catch (error) {
@@ -353,9 +387,46 @@ async function updateProfile(req, res) {
 
 		const newToken = await createToken({ ...updateDriver }, DRIVER_TOKEN)
 
+		const today = new Date()
+		const startOfDay = new Date(today.setHours(0, 0, 0, 0))
+		const endOfDay = new Date(today.setHours(23, 59, 59, 999))
+
+		const earningsToday = await prisma.earnings.findMany({
+			where: {
+				driverId: updateDriver.id,
+				date: {
+					gte: startOfDay,
+					lte: endOfDay,
+				},
+			},
+			select: { amount: true },
+		})
+
+		const totalEarnings = await prisma.earnings.findMany({
+			where: { driverId: updateDriver.id },
+			select: { amount: true },
+		})
+
+		const earningsTodayInNumber = earningsToday.reduce(
+			(total, earning) => total + earning.amount,
+			0
+		)
+
+		const totalEarningsInNumber = totalEarnings.reduce(
+			(total, earning) => total + earning.amount,
+			0
+		)
+
+		const convertedRating = await convertRatingIntoAverage(userExists.rating)
+
 		return res.json({
 			msg: 'Akkaunt yangilandi',
-			profile: updateDriver,
+			profile: {
+				...updateDriver,
+				rating: convertedRating,
+				earnings: earningsTodayInNumber,
+				totalEarnings: totalEarningsInNumber,
+			},
 			token: newToken,
 			status: 'ok',
 		})

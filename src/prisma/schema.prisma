@@ -39,29 +39,28 @@ model Confirmation {
 }
 
 model Driver {
-  id            String                 @id @unique @default(cuid())
-  oneId         String                 @unique
-  fullname      String
-  phone         String[]
-  password      String                 @default("")
-  license       StatusLicenseDocuments @default(INVALID) // prava
-  registration  StatusLicenseDocuments @default(INVALID) // mashina dokumenti
-  rides         Ride[]
-  status        StatusDriver?
-  type          DriverTypes            @default(NOTMEASURED)
-  ban           Banned?                @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id}
-  createdAt     DateTime               @default(now())
-  lastOnline    DateTime?
-  account       String                 @default("0")
-  loggedIn      Boolean                @default(false)
-  deleted       Boolean                @default(false)
-  rating        Int[]                  @default([])
-  car           Car?
-  bannedId      String?
-  totalEarnings Float                  @default(0)
-  earnings      Earnings[]
-  card          String                 @default("")
-  ridesLength   Int                    @default(0)
+  id           String                 @id @unique @default(cuid())
+  oneId        String                 @unique
+  fullname     String
+  phone        String[]
+  password     String                 @default("")
+  license      StatusLicenseDocuments @default(INVALID) // prava
+  registration StatusLicenseDocuments @default(INVALID) // mashina dokumenti
+  rides        Ride[]
+  status       StatusDriver?
+  type         DriverTypes            @default(NOTMEASURED)
+  ban          Banned?                @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id}
+  createdAt    DateTime               @default(now())
+  lastOnline   DateTime?
+  account      Int                    @default(0)
+  loggedIn     Boolean                @default(false)
+  deleted      Boolean                @default(false)
+  rating       Int[]                  @default([])
+  car          Car?
+  bannedId     String?
+  earnings     Earnings[]
+  card         String                 @default("")
+  ridesLength  Int                    @default(0)
 }
 
 model Earnings {
