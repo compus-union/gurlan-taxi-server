@@ -60,6 +60,8 @@ model Driver {
   bannedId      String?
   totalEarnings Float                  @default(0)
   earnings      Earnings[]
+  card          String                 @default("")
+  ridesLength   Int                    @default(0)
 }
 
 model Earnings {
