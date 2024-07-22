@@ -72,18 +72,9 @@ model Earnings {
 }
 
 model Admin {
-  id        String    @id @unique @default(cuid())
-  oneId     String    @unique
-  fullname  String
-  phone     String
-  email     String
-  password  String
-  type      AdminType @default(ADMIN)
-  drivers   String[]  @default([])
-  createdAt DateTime  @default(now())
-  deleted   Boolean   @default(false)
-  ban       Banned?   @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id} -> super admin tomonidan
-  bannedId  String?
+  id       String @id @unique @default(cuid())
+  oneId    String @unique
+  password String
 }
 
 model Car {
@@ -108,7 +99,6 @@ model PrimeTime {
   finishTimeFull String
   excWeekDays    String
   excMonth       String
-  admin          Json? // {id: admin_id, changed: boolean}
   deleted        Boolean         @default(false)
 }
 
@@ -132,14 +122,12 @@ model Ride {
 model Banned {
   id     String     @id @unique @default(cuid())
   phone  String
-  admin  String
   reason String
   type   BannedType
   date   DateTime?  @default(now())
   banned Boolean    @default(false)
   Driver Driver[]
   Client Client[]
-  Admin  Admin[]
 }
 
 model PromoCode {
@@ -243,5 +231,4 @@ enum StatusPrimeTime {
 enum BannedType {
   DRIVER
   CLIENT
-  ADMIN
 }
