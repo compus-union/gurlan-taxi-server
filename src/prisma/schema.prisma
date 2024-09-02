@@ -39,27 +39,28 @@ model Confirmation {
 }
 
 model Driver {
-  id            String                 @id @unique @default(cuid())
-  oneId         String                 @unique
-  fullname      String
-  phone         String[]
-  password      String                 @default("")
-  license       StatusLicenseDocuments @default(INVALID) // prava
-  registration  StatusLicenseDocuments @default(INVALID) // mashina dokumenti
-  rides         Ride[]
-  status        StatusDriver?
-  type          DriverTypes            @default(NOTMEASURED)
-  ban           Banned?                @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id}
-  createdAt     DateTime               @default(now())
-  lastOnline    DateTime?
-  account       String                 @default("0")
-  loggedIn      Boolean                @default(false)
-  deleted       Boolean                @default(false)
-  rating        Int[]                  @default([])
-  car           Car?
-  bannedId      String?
-  totalEarnings Float                  @default(0)
-  earnings      Earnings[]
+  id           String                 @id @unique @default(cuid())
+  oneId        String                 @unique
+  fullname     String
+  phone        String[]
+  password     String                 @default("")
+  license      StatusLicenseDocuments @default(INVALID) // prava
+  registration StatusLicenseDocuments @default(INVALID) // mashina dokumenti
+  rides        Ride[]
+  status       StatusDriver?
+  type         DriverTypes            @default(NOTMEASURED)
+  ban          Banned?                @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id}
+  createdAt    DateTime               @default(now())
+  lastOnline   DateTime?
+  account      Int                    @default(0)
+  loggedIn     Boolean                @default(false)
+  deleted      Boolean                @default(false)
+  rating       Int[]                  @default([])
+  car          Car?
+  bannedId     String?
+  earnings     Earnings[]
+  card         String                 @default("")
+  ridesLength  Int                    @default(0)
 }
 
 model Earnings {
@@ -71,18 +72,10 @@ model Earnings {
 }
 
 model Admin {
-  id        String    @id @unique @default(cuid())
-  oneId     String    @unique
-  fullname  String
-  phone     String
-  email     String
+  id        String   @id @unique @default(cuid())
+  oneId     String   @unique
   password  String
-  type      AdminType @default(ADMIN)
-  drivers   String[]  @default([])
-  createdAt DateTime  @default(now())
-  deleted   Boolean   @default(false)
-  ban       Banned?   @relation(fields: [bannedId], references: [id]) // {ban: boolean, reason: string, admin: admin_id} -> super admin tomonidan
-  bannedId  String?
+  lastCheck DateTime @default(now())
 }
 
 model Car {
@@ -107,7 +100,6 @@ model PrimeTime {
   finishTimeFull String
   excWeekDays    String
   excMonth       String
-  admin          Json? // {id: admin_id, changed: boolean}
   deleted        Boolean         @default(false)
 }
 
@@ -131,14 +123,12 @@ model Ride {
 model Banned {
   id     String     @id @unique @default(cuid())
   phone  String
-  admin  String
   reason String
   type   BannedType
   date   DateTime?  @default(now())
   banned Boolean    @default(false)
   Driver Driver[]
   Client Client[]
-  Admin  Admin[]
 }
 
 model PromoCode {
@@ -205,7 +195,10 @@ enum StatusRide {
   CANCELLED_BY_CLIENT
   CANCELLED_BY_DRIVER
   CANCELLED_BY_SERVER
-  ACTIVE
+  CLIENT_LOOKING
+  CLIENT_WAITING
+  DRIVER_WAITING
+  ON_THE_WAY
   FINISHED
 }
 
@@ -242,5 +235,4 @@ enum StatusPrimeTime {
 enum BannedType {
   DRIVER
   CLIENT
-  ADMIN
 }

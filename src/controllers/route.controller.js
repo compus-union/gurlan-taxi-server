@@ -39,7 +39,7 @@ async function calculateRoute(req, res) {
   }
 }
 
-async function creatRoute(req, res) {
+async function createRoute(req, res) {
   try {
     const { ride } = req.body;
     const { client } = req.body;
@@ -65,4 +65,4 @@ async function creatRoute(req, res) {
   }
 }
 
-module.exports = { calculateRoute, creatRoute };
+module.exports = { calculateRoute, createRoute };
