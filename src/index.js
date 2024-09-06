@@ -33,6 +33,7 @@ const io = new Server(server, {
 			'http://192.168.1.8:8100',
 			'http://192.168.1.7:8100',
 			'http://192.168.1.6:8100',
+			'http://192.168.1.12:8100',
 		],
 	},
 })
@@ -70,16 +71,22 @@ io.on('connection', socket => {
 				await addConnectedUser(data.user)
 			}
 			if (data.user.type === 'client') {
-				await prisma.client.update({
-					where: { oneId: data.user.oneId },
-					data: { status: 'ONLINE' },
-				})
+				const existedUser = await prisma.client.count({ where: { oneId: data.user.oneId } })
+				if (existedUser) {
+					await prisma.client.update({
+						where: { oneId: data.user.oneId },
+						data: { status: 'ONLINE' },
+					})
+				}
 			}
 			if (data.user.type === 'driver') {
-				await prisma.driver.update({
-					where: { oneId: data.user.oneId },
-					data: { status: 'ONLINE' },
-				})
+				const existedUser = await prisma.driver.count({ where: { oneId: data.user.oneId } })
+				if (existedUser) {
+					await prisma.driver.update({
+						where: { oneId: data.user.oneId },
+						data: { status: 'ONLINE' },
+					})
+				}
 			}
 
 			const onlineDriversWithMap = await countOnlineDrivers()
@@ -144,7 +151,15 @@ io.on('connection', socket => {
 	})
 
 	socket.on('order:created', async data => {
-		// when client ordered for a taxi
+		try {
+			/**
+			 * data: {
+			 * 		origin: {lat,lng,name}
+			 * 		destination: {lat,lng,name}
+			 * }
+			 */
+			const newOrder = await prisma.ride.create({ data: {} })
+		} catch (error) {}
 	})
 
 	socket.on('disconnect', async () => {

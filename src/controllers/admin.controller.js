@@ -143,7 +143,7 @@ async function checkAdminsData(req, res) {
 			if (isTokenValidForAdmin.oneId !== oneId) {
 				return res.json({
 					status: 'bad',
-					msg: 'Tokendagi oneId tizimda mavjud emas (oddiy admin)', 
+					msg: 'Tokendagi oneId tizimda mavjud emas (oddiy admin)',
 				})
 			}
 
@@ -198,4 +198,39 @@ async function checkAdminsData(req, res) {
 	}
 }
 
-module.exports = { checkIfAdminExistsOnServer, auth, checkAdminsData }
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @returns
+ */
+async function getAllDrivers(req, res) {
+	try {
+		const driversCount = await prisma.driver.count()
+
+		const driversList = await prisma.driver.findMany({
+			include: { ban: true, car: true, earnings: true, rides: true },
+		})
+
+		if (!driversList) {
+			return res.json({ status: 'bad', msg: 'Haydovchilar mavjud emas!' })
+		}
+
+		let drivers = []
+
+		driversList.forEach(driver => {
+			drivers.push({
+				...driver,
+				car: {},
+				carDetails: `${driver.car.name} ${driver.car.number}`,
+				carOneId: driver.car.oneId,
+			})
+		})
+
+		return res.json({ status: 'ok', drivers, count: driversCount })
+	} catch (error) {
+		console.log(error)
+		return res.status(500).json(error)
+	}
+}
+
+module.exports = { checkIfAdminExistsOnServer, auth, checkAdminsData, getAllDrivers }

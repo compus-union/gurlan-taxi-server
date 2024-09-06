@@ -64,7 +64,7 @@ model Driver {
 }
 
 model Earnings {
-  id       Int      @id @default(autoincrement())
+  id       String   @id @default(cuid())
   date     DateTime @default(now())
   amount   Float
   driverId String

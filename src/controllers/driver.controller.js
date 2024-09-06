@@ -40,7 +40,6 @@ async function register(req, res) {
 				},
 				ban: {
 					create: {
-						admin: '',
 						phone: phone[0],
 						date: new Date(),
 						reason: '',

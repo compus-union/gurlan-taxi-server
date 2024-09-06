@@ -5,7 +5,9 @@ const {
 	checkIfAdminExistsOnServer,
 	auth,
 	checkAdminsData,
+	getAllDrivers,
 } = require('../controllers/admin.controller')
+const { checkAvailability, checkBoth } = require('../middleware/admin.middleware')
 
 // check if there is any admins registered on the server
 // RETURNS: {count: number}
@@ -16,4 +18,8 @@ router.post('/auth', auth)
 
 // check admin's data
 router.get('/check/:oneId', checkAdminsData)
+
+// get all driver's data
+router.get('/drivers/all', checkAvailability, checkBoth, getAllDrivers)
+
 module.exports = router
